@@ -1,0 +1,38 @@
+{
+  "redirects": [
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/help.html",
+      "destination": "/help",
+      "permanent": true
+    },
+    {
+      "source": "/access.html",
+      "destination": "/access",
+      "permanent": true
+    },
+    {
+      "source": "/help-success.html",
+      "destination": "/help-success",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/help",
+      "destination": "/help.html"
+    },
+    {
+      "source": "/access",
+      "destination": "/access.html"
+    },
+    {
+      "source": "/help-success",
+      "destination": "/help-success.html"
+    }
+  ]
+}

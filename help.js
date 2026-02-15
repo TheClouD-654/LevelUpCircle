@@ -69,7 +69,7 @@ function setupForm() {
       .then((response) => {
         console.log('Emails sent successfully!', response);
         const encodedName = encodeURIComponent(formData.from_name || 'there');
-        window.location.href = `help-success.html?name=${encodedName}`;
+        window.location.href = `/help-success?name=${encodedName}`;
       })
       .catch((error) => {
         console.error('Failed to send email:', error);
