@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Message Received | The LevelUp Circle</title>
+  <link rel="icon" type="image/png" href="images/bglevelupcircle.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="help.css" />
+</head>
+<body>
+  <main class="help-page">
+    <section class="help-section">
+      <div class="container success-wrap">
+        <article class="success-card">
+          <p class="success-kicker">Message Sent</p>
+          <h1 id="successTitle">We received your message.</h1>
+          <p>
+            Our support team will review it and reply within 24 hours.
+            If your issue is urgent, email <strong>support@levelupcircle.com</strong>.
+          </p>
+          <div class="success-actions">
+            <a href="index.html" class="btn btn-primary">Back to Home</a>
+            <a href="help.html" class="btn btn-secondary">Send Another</a>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const name = (params.get('name') || '').trim();
+    if (name) {
+      const safeName = name.replace(/[<>]/g, '');
+      document.getElementById('successTitle').textContent = `Thanks ${safeName}, we received your message.`;
+    }
+  </script>
+</body>
+</html>

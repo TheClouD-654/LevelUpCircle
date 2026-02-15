@@ -197,7 +197,7 @@
       width: min(92%, var(--max));
       margin: 0 auto;
     }
-
+    
     .navbar {
       position: fixed;
       top: 18px;
@@ -251,12 +251,21 @@
     }
 
     .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
       color: var(--text);
       text-decoration: none;
       font-weight: 700;
       letter-spacing: -0.01em;
       white-space: nowrap;
       justify-content: center;
+    }
+
+    .nav-logo {
+      height: 40px;
+      width: auto;
+      display: block;
     }
 
     .nav-links {
@@ -311,7 +320,6 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: url("images/trading-bg.png") center/cover no-repeat;
       opacity: 0.08;
       pointer-events: none;
       z-index: 0;
@@ -574,7 +582,7 @@
       margin-right: 10px;
       vertical-align: middle;
     }
-    
+
     .old-price.normal-price {
       font-size: 1em;
       color: #e7f7ff;
@@ -850,5 +858,128 @@
 
       .hero .cta-group a {
         width: min(360px, 100%);
+      }
+    }
+
+    .help-page {
+      min-height: 100vh;
+      padding: 56px 0;
+    }
+
+    .help-section {
+      padding: 0;
+    }
+
+    .help-topbar {
+      margin-bottom: 24px;
+    }
+
+    .help-back {
+      min-width: auto;
+    }
+
+    .help-intro {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .help-intro h1 {
+      font-size: clamp(1.9rem, 4.2vw, 3rem);
+      line-height: 1.15;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    .help-intro p {
+      max-width: 700px;
+      margin: 0 auto;
+      color: var(--muted);
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .help-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .help-card h3 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+
+    .help-card p {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .help-form {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      background: rgba(12, 21, 34, 0.7);
+      border: 1px solid rgba(113, 204, 255, 0.2);
+      border-radius: 18px;
+      padding: 18px;
+    }
+
+    .help-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .help-field label {
+      font-size: 0.86rem;
+      color: #b5c8dd;
+    }
+
+    .help-field input,
+    .help-field select,
+    .help-field textarea {
+      width: 100%;
+      border: 1px solid rgba(113, 204, 255, 0.24);
+      border-radius: 12px;
+      background: rgba(7, 18, 32, 0.8);
+      color: var(--text);
+      font: inherit;
+      padding: 11px 12px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .help-field input:focus,
+    .help-field select:focus,
+    .help-field textarea:focus {
+      border-color: rgba(91, 200, 255, 0.55);
+      box-shadow: 0 0 0 3px rgba(68, 182, 255, 0.14);
+    }
+
+    .help-field-full {
+      grid-column: 1 / -1;
+    }
+
+    .help-actions {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-start;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .help-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .help-form {
+        grid-template-columns: 1fr;
       }
     }
