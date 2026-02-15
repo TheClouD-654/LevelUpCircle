@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The LevelUp Circle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body> 
+  <div class="bg-ambient" aria-hidden="true">
+    <div class="bg-grid"></div>
+    <div class="bg-sweep"></div>
+    <div class="bg-beams">
+      <span class="beam beam-1"></span>
+      <span class="beam beam-2"></span>
+      <span class="beam beam-3"></span>
+    </div>
+    <div class="trading-symbols">
+      <span class="symbol sym-1">▲</span>
+      <span class="symbol sym-2">▼</span>
+      <span class="symbol sym-3">↗</span>
+      <span class="symbol sym-4">↘</span>
+      <span class="symbol sym-5">Bull</span>
+      <span class="symbol sym-6">Bear</span>
+    </div>
+    <span class="bg-spark s1"></span>
+    <span class="bg-spark s2"></span>
+    <span class="bg-spark s3"></span>
+    <span class="bg-spark s4"></span>
+    <span class="bg-spark s5"></span>
+    <span class="bg-spark s6"></span>
+  </div>
+
+  <nav class="navbar" aria-label="Primary">
+    <div class="navbar-inner">
+      <a href="#top" class="nav-brand">LevelUp Circle</a>
+      <div class="nav-links">
+        <a href="#top">Home</a>
+        <a href="#content">Content</a>
+        <a href="#mentor">Mentor</a>
+        <a href="#pricing">Pricing</a>
+        <a href="help.html">Contact Us</a>
+      </div>
+    </div>
+  </nav>
+
+  <header id="top" class="hero reveal">
+    <div class="container">
+      <nav class="top-navbar" aria-label="Top Primary">
+        <div class="navbar-inner">
+          <a href="#top" class="nav-brand">LevelUp Circle</a>
+          <div class="nav-links">
+            <a href="#top">Home</a>
+            <a href="#content">Content</a>
+            <a href="#mentor">Mentor</a>
+            <a href="#pricing">Pricing</a>
+            <a href="help.html">Contact Us</a>
+          </div>
+        </div>
+      </nav>
+      
+      <h1>Master Trading with The LevelUp Circle</h1>
+      <p>
+        Learn the market from scratch with a practical beginner-friendly PDF guide.
+        Build confidence, understand charts, and execute disciplined trades with clarity.
+      </p>
+      <div class="cta-group">
+        <a href="#pricing" class="btn btn-primary">Buy NOW</a>
+        <a href="#content" class="btn btn-secondary">Preview Sample</a>
+      </div>
+      
+    </div>
+  </header>
+
+  <section id="trust" class="reveal">
+    <div class="container">
+      <h2 class="section-title">Why Traders Start Here</h2>
+      <div class="grid grid-4">
+        <article class="card">
+          <h3>Beginner Friendly</h3>
+          <p>Simple explanations built for newcomers with no prior market experience.</p>
+        </article>
+        <article class="card">
+          <h3>Practical Strategies</h3>
+          <p>Actionable methods you can apply directly to your day-to-day trading routine.</p>
+        </article>
+        <article class="card">
+          <h3>Risk Management Focus</h3>
+          <p>Core principles that help protect capital and control emotional decisions.</p>
+        </article>
+        <article class="card">
+          <h3>Step-by-Step Guide</h3>
+          <p>Structured lessons to move from basic understanding to confident execution.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="content" class="reveal">
+    <div class="container">
+      <h2 class="section-title">Whats Inside the PDF</h2>
+      <p class="section-subtitle">A concise module-based roadmap designed to give you real foundational trading skills.</p>
+      <div class="grid grid-4">
+        <article class="card">
+          <h3>Trading Basics</h3>
+          <p>Market types, terminology, and how order flow works in simple language.</p>
+        </article>
+        <article class="card">
+          <h3>Chart Reading</h3>
+          <p>Understand candlesticks, trend structure, and support/resistance behavior.</p>
+        </article>
+        <article class="card">
+          <h3>Entry & Exit Strategy</h3>
+          <p>Clear frameworks for timing trades and managing exits without guesswork.</p>
+        </article>
+        <article class="card">
+          <h3>Risk Management</h3>
+          <p>Position sizing, stop-loss planning, and long-term consistency principles.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="mentor" class="reveal">
+    <div class="container about">
+      <div class="mentor-image">
+        <img src="images/mentor.jpg">
+      </div>
+      <div class="about-content">
+        <h2 class="section-title" style="text-align:left; margin-bottom: 16px;">About The LevelUp Circle</h2>
+        <p>The LevelUp Society is focused on helping new traders build a disciplined and realistic approach to the markets.</p>
+        <p>Instead of hype, the mentorship emphasizes structure, risk awareness, and repeatable decision-making.</p>
+        <p>This Exceptional Course is specially designed to guide beginners from uncertainty to a confident, process-driven mindset.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pricing" class="reveal">
+    <div class="container">
+      <h2 class="section-title">Simple Pricing</h2>
+      <div class="pricing-wrap">
+        <article class="pricing-card">
+          <h3>Basic Edition</h3>
+          <div class="price">
+            <span class="old-price">$5.99</span>
+            <span class="new-price" id="new-price">$1.99</span>
+          </div>
+          <div class="offer-box" data-offer-days="1">
+            <p class="offer-label">Offer ends in</p>
+            <p class="offer-timer" id="offer-timer">00:00:00:00</p>
+          </div>
+          <p class="pricing-reason">Master the basics of Forex Market</p>
+          <p class="pricing-note">Download immediately after payment.</p>
+          <a href="access.html" class="btn btn-primary" style="width:100%;">Get Instant Access</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="testimonials" class="reveal">
+    <div class="container">
+      <h2 class="section-title">What Learners Say</h2>
+      <div class="grid grid-3">
+        <article class="card">
+          <p>"Clear and practical. I finally understand how to read charts without getting overwhelmed."</p>
+          <h3 style="margin-top:12px;">- Alex R.</h3>
+        </article>
+        <article class="card">
+          <p>"The risk management section changed the way I trade. Very beginner-friendly and direct."</p>
+          <h3 style="margin-top:12px;">- Priya M.</h3>
+        </article>
+        <article class="card">
+          <p>"No fluff, just real guidance. Perfect starting point for anyone new to trading."</p>
+          <h3 style="margin-top:12px;">- Daniel K.</h3>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container">
+      This content is for educational purposes only. Trading involves risk.
+    </div>
+  </footer>
+  <script src="script.js" defer></script>
+</body> 
+</html>
