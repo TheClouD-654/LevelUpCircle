@@ -138,11 +138,15 @@ body {
   width: 100%;
   border: 1px solid rgba(113, 204, 255, 0.24);
   border-radius: 12px;
-  background: rgba(7, 18, 32, 0.8);
+  background: rgba(17, 25, 40, 0.68);
   color: var(--text);
   font: inherit;
   padding: 11px 12px;
   outline: none;
+}
+
+.help-field select {
+  backdrop-filter: blur(10px);
 }
 
 .help-field input:focus,

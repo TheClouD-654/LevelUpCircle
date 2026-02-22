@@ -1,10 +1,10 @@
 // Wait for EmailJS to load, then initialize
 let emailInitAttempts = 0;
 const MAX_EMAIL_INIT_ATTEMPTS = 100; // ~10 seconds with 100ms interval
-const SUPPORT_EMAIL = 'support@levelupcircle.com';
-const EMAILJS_SERVICE_ID = 'test-service-1';
-const EMAILJS_CONTACT_TEMPLATE_ID = 'test-template-contactus';
-const EMAILJS_AUTOREPLY_TEMPLATE_ID = 'test-template-autoreply';
+const SUPPORT_EMAIL = 'thelevelupcircle@gmail.com';
+const EMAILJS_SERVICE_ID = 'google_levelupcircle';
+const EMAILJS_CONTACT_TEMPLATE_ID = 'contactus-levelupcircle';
+const EMAILJS_AUTOREPLY_TEMPLATE_ID = 'autoreply_levelupcircle';
 
 function setFormStatus(message, isError = false) {
   const statusEl = document.getElementById('formStatus');
@@ -16,7 +16,7 @@ function setFormStatus(message, isError = false) {
 
 function initializeEmailJS() {
   if (typeof emailjs !== 'undefined') {
-    emailjs.init("-NZWxEZYr2HF-V1wT");
+    emailjs.init("PoyrWk8nQOwRKdyrd");
     setupForm();
   } else {
     // Retry while script is loading, then fail safely.
