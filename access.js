@@ -92,7 +92,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     window.setTimeout(() => {
       syncContinueState();
       if (serverSaved) {
-        setMessage('Buyer info saved securely.', 'success');
+        setMessage('Buyer info saved securely. Soon the payment and all materials will be available.', 'success');
       } else {
         setMessage('Buyer info saved locally. Configure KV to store centrally.', 'success');
       }
