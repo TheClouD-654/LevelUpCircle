@@ -53,14 +53,22 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     continueBtn.disabled = true;
     setMessage('Preparing secure checkout...', 'success');
 
-    localStorage.setItem('levelup_buyer_info', JSON.stringify({
+    const submission = {
       name,
       email,
       phone,
       product: 'LevelUp Circle Starter Bundle (ZIP)',
       amount: 1.99,
-      currency: 'USD'
-    }));
+      currency: 'USD',
+      createdAt: new Date().toISOString()
+    };
+
+    localStorage.setItem('levelup_buyer_info', JSON.stringify(submission));
+
+    const submissionsKey = 'levelup_buyer_submissions';
+    const existing = JSON.parse(localStorage.getItem(submissionsKey) || '[]');
+    const updated = [submission, ...existing].slice(0, 250);
+    localStorage.setItem(submissionsKey, JSON.stringify(updated));
 
     // Placeholder. Next step: replace with real backend call to create Instamojo payment session.
     window.setTimeout(() => {

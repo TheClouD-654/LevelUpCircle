@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Data | LevelUp Circle</title>
+  <link rel="icon" type="image/png" href="images/bglevelupcircle.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin-data.css" />
+</head>
+<body>
+  <main class="admin-shell">
+    <a href="/" class="btn btn-secondary">Back to Home</a>
+
+    <section class="admin-card">
+      <h1>Stored Buyer Info</h1>
+      <p class="subtitle">Data captured after clicking "Continue to Secure Payment".</p>
+
+      <div class="actions">
+        <button id="refresh-btn" class="btn btn-primary" type="button">Refresh</button>
+        <button id="clear-btn" class="btn btn-danger" type="button">Clear Local Data</button>
+      </div>
+
+      <p id="status" class="status" aria-live="polite"></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date/Time</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Product</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="admin-data.js" defer></script>
+  <script src="dev-notice.js" defer></script>
+  <script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

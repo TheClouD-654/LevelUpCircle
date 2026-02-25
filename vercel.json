@@ -34,6 +34,11 @@
       "source": "/secure-panel.html",
       "destination": "/secure-panel",
       "permanent": true
+    },
+    {
+      "source": "/admin-data.html",
+      "destination": "/admin-data",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -60,6 +65,10 @@
     {
       "source": "/secure-panel",
       "destination": "/secure-panel.html"
+    },
+    {
+      "source": "/admin-data",
+      "destination": "/admin-data.html"
     }
   ]
 }
