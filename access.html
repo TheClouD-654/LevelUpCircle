@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Access</title>
+  <title>Secure Access | LevelUp Circle</title>
   <link rel="icon" type="image/png" href="images/bglevelupcircle.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,10 +11,52 @@
   <link rel="stylesheet" href="access.css" />
 </head>
 <body>
-  <main class="access-wrap">
-    <h1>Access Page</h1>
-    <p>Payment integration and delivery flow will be added next.</p>
+  <main class="access-shell">
+    <a href="/" class="back-link">Back to Home</a>
+
+    <section class="access-card">
+      <header class="card-header">
+        <h1>Get Instant Access</h1>
+        <p>Complete your details, then continue to secure checkout.</p>
+      </header>
+
+      <div class="bundle">
+        <h2>The LevelUp Circle Starter Bundle</h2>
+        <p class="bundle-sub">5 beginner trading PDFs delivered in one ZIP file.</p>
+        <ul class="bundle-list">
+          <li>PDF 1: Trading Foundations</li>
+          <li>PDF 2: Candlestick and Chart Basics</li>
+          <li>PDF 3: Entry and Exit Frameworks</li>
+          <li>PDF 4: Risk and Capital Protection</li>
+          <li>PDF 5: Trader Psychology and Discipline</li>
+        </ul>
+        <div class="price-row">
+          <span class="old-price">$3.99</span>
+          <span class="new-price">$1.99</span>
+        </div>
+      </div>
+
+      <form id="access-form" class="access-form" novalidate>
+        <label for="buyer-name">Full Name</label>
+        <input id="buyer-name" name="buyerName" type="text" autocomplete="name" required />
+
+        <label for="buyer-email">Email</label>
+        <input id="buyer-email" name="buyerEmail" type="email" autocomplete="email" required />
+
+        <label for="buyer-phone">Phone (optional)</label>
+        <input id="buyer-phone" name="buyerPhone" type="tel" autocomplete="tel" />
+
+        <p id="form-message" class="form-message" aria-live="polite"></p>
+        <button id="continue-btn" type="submit">Continue to Secure Payment</button>
+        <p class="legal-links">
+          By continuing, you agree to our
+          <a href="/terms">Terms and Conditions</a> and
+          <a href="/refund-policy">Refund and Cancellation Policy</a>.
+        </p>
+      </form>
+    </section>
   </main>
+
   <script src="access.js" defer></script>
   <script defer src="/_vercel/insights/script.js"></script>
 </body>

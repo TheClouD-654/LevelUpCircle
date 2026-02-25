@@ -19,6 +19,16 @@
       "source": "/help-success.html",
       "destination": "/help-success",
       "permanent": true
+    },
+    {
+      "source": "/terms.html",
+      "destination": "/terms",
+      "permanent": true
+    },
+    {
+      "source": "/refund-policy.html",
+      "destination": "/refund-policy",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -33,6 +43,14 @@
     {
       "source": "/help-success",
       "destination": "/help-success.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/refund-policy",
+      "destination": "/refund-policy.html"
     }
   ]
 }
