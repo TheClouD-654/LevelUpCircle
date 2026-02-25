@@ -29,6 +29,11 @@
       "source": "/refund-policy.html",
       "destination": "/refund-policy",
       "permanent": true
+    },
+    {
+      "source": "/secure-panel.html",
+      "destination": "/secure-panel",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -51,6 +56,10 @@
     {
       "source": "/refund-policy",
       "destination": "/refund-policy.html"
+    },
+    {
+      "source": "/secure-panel",
+      "destination": "/secure-panel.html"
     }
   ]
 }

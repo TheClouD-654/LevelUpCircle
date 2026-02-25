@@ -12,7 +12,7 @@
 </head>
 <body>
   <main class="access-shell">
-    <a href="/" class="back-link">Back to Home</a>
+    <a href="/" class="btn btn-secondary">Back to Home</a>
 
     <section class="access-card">
       <header class="card-header">
@@ -30,6 +30,8 @@
           <li>PDF 4: Risk and Capital Protection</li>
           <li>PDF 5: Trader Psychology and Discipline</li>
         </ul>
+        <p class="bundle-note">This course will not make you rich overnight, but it will clarify the base to actually build wealth with skill and discipline.</p>
+        <p class="bundle-support">Doubts and homework are checked in DM with 1-to-1 interaction.</p>
         <div class="price-row">
           <span class="old-price">$3.99</span>
           <span class="new-price">$1.99</span>
@@ -45,19 +47,23 @@
 
         <label for="buyer-phone">Phone (optional)</label>
         <input id="buyer-phone" name="buyerPhone" type="tel" autocomplete="tel" />
-
+        
         <p id="form-message" class="form-message" aria-live="polite"></p>
-        <button id="continue-btn" type="submit">Continue to Secure Payment</button>
-        <p class="legal-links">
-          By continuing, you agree to our
-          <a href="/terms">Terms and Conditions</a> and
-          <a href="/refund-policy">Refund and Cancellation Policy</a>.
-        </p>
+        <label class="consent-check" for="consent-checkbox">
+          <input id="consent-checkbox" name="consent" type="checkbox" />
+          <span>
+            I agree to the
+            <a href="/terms">Terms and Conditions</a> and
+            <a href="/refund-policy">Refund and Cancellation Policy</a>.
+          </span>
+        </label>
+        <button id="continue-btn" type="submit" disabled>Continue to Secure Payment</button>
       </form>
     </section>
   </main>
 
   <script src="access.js" defer></script>
+  <script src="dev-notice.js" defer></script>
   <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

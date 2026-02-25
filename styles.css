@@ -606,6 +606,62 @@
       margin-bottom: 18px;
     }
 
+    .follow-inner {
+      text-align: center;
+      padding: 0;
+      margin-bottom: 18px;
+    }
+
+    .follow-inner h2 {
+      font-size: clamp(1.35rem, 2.4vw, 1.8rem);
+      margin-bottom: 8px;
+    }
+
+    .follow-sub {
+      color: var(--muted);
+      margin: -8px auto 18px;
+      max-width: 560px;
+    }
+
+    .follow-links {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .follow-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 132px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(120, 206, 255, 0.35);
+      background: rgba(17, 30, 48, 0.55);
+      color: #e9f4ff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .follow-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(132, 218, 255, 0.6);
+      background: rgba(23, 40, 63, 0.8);
+    }
+
+    .follow-btn svg {
+      width: 18px;
+      height: 18px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     footer {
       border-top: 1px solid rgba(95, 187, 255, 0.2);
       margin-top: 25px;

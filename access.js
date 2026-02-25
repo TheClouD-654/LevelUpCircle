@@ -1,13 +1,29 @@
 const form = document.querySelector('#access-form');
 const messageEl = document.querySelector('#form-message');
 const continueBtn = document.querySelector('#continue-btn');
+const consentCheckbox = document.querySelector('#consent-checkbox');
 
-if (form && messageEl && continueBtn) {
+if (form && messageEl && continueBtn && consentCheckbox) {
   const setMessage = (text, type) => {
     messageEl.textContent = text;
     messageEl.className = 'form-message';
     if (type) messageEl.classList.add(type);
   };
+
+  const syncContinueState = () => {
+    continueBtn.disabled = !consentCheckbox.checked;
+  };
+
+  consentCheckbox.addEventListener('change', () => {
+    syncContinueState();
+    if (!consentCheckbox.checked) {
+      setMessage('Please agree to terms before continuing.', 'error');
+    } else {
+      setMessage('', '');
+    }
+  });
+
+  syncContinueState();
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -28,6 +44,12 @@ if (form && messageEl && continueBtn) {
       return;
     }
 
+    if (!consentCheckbox.checked) {
+      setMessage('Please agree to terms before continuing.', 'error');
+      syncContinueState();
+      return;
+    }
+
     continueBtn.disabled = true;
     setMessage('Preparing secure checkout...', 'success');
 
@@ -42,8 +64,8 @@ if (form && messageEl && continueBtn) {
 
     // Placeholder. Next step: replace with real backend call to create Instamojo payment session.
     window.setTimeout(() => {
-      continueBtn.disabled = false;
-      setMessage('Buyer info saved. Instamojo checkout integration is the next step.', 'success');
+      syncContinueState();
+      setMessage('Buyer info saved. Soon payment and all the materials will be added.', 'success');
     }, 700);
   });
 }
