@@ -12,8 +12,7 @@ const formatDate = (iso) => {
   return d.toLocaleString();
 };
 
-const loadRows = () => {
-  const entries = JSON.parse(localStorage.getItem(submissionsKey) || '[]');
+const renderRows = (entries) => {
   if (!rowsEl) return;
 
   if (!entries.length) {
@@ -33,12 +32,35 @@ const loadRows = () => {
   `).join('');
 };
 
+const loadLocalRows = () => {
+  const entries = JSON.parse(localStorage.getItem(submissionsKey) || '[]');
+  renderRows(entries);
+};
+
+const loadRows = async () => {
+  try {
+    const response = await fetch('/api/submissions/list');
+    const payload = await response.json().catch(() => ({}));
+
+    if (response.ok && payload.ok && Array.isArray(payload.entries)) {
+      renderRows(payload.entries);
+      statusEl.textContent = `Loaded ${payload.entries.length} server record(s).`;
+      return;
+    }
+
+    loadLocalRows();
+    statusEl.textContent = 'Server data unavailable. Showing local browser data.';
+  } catch (error) {
+    loadLocalRows();
+    statusEl.textContent = 'Server data unavailable. Showing local browser data.';
+  }
+};
+
 if (rowsEl && refreshBtn && clearBtn && statusEl) {
   loadRows();
 
   refreshBtn.addEventListener('click', () => {
     loadRows();
-    statusEl.textContent = 'Data refreshed.';
   });
 
   clearBtn.addEventListener('click', () => {

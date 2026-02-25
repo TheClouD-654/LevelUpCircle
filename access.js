@@ -25,7 +25,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
 
   syncContinueState();
 
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const formData = new FormData(form);
@@ -65,15 +65,37 @@ if (form && messageEl && continueBtn && consentCheckbox) {
 
     localStorage.setItem('levelup_buyer_info', JSON.stringify(submission));
 
-    const submissionsKey = 'levelup_buyer_submissions';
-    const existing = JSON.parse(localStorage.getItem(submissionsKey) || '[]');
-    const updated = [submission, ...existing].slice(0, 250);
-    localStorage.setItem(submissionsKey, JSON.stringify(updated));
+    let serverSaved = false;
+    try {
+      const response = await fetch('/api/submissions/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submission)
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (response.ok && payload.ok) {
+        serverSaved = true;
+      }
+    } catch (error) {
+      serverSaved = false;
+    }
+
+    if (!serverSaved) {
+      const submissionsKey = 'levelup_buyer_submissions';
+      const existing = JSON.parse(localStorage.getItem(submissionsKey) || '[]');
+      const updated = [submission, ...existing].slice(0, 250);
+      localStorage.setItem(submissionsKey, JSON.stringify(updated));
+    }
 
     // Placeholder. Next step: replace with real backend call to create Instamojo payment session.
     window.setTimeout(() => {
       syncContinueState();
-      setMessage('Buyer info saved. Soon payment and all the materials will be added.', 'success');
+      if (serverSaved) {
+        setMessage('Buyer info saved securely.', 'success');
+      } else {
+        setMessage('Buyer info saved locally. Configure KV to store centrally.', 'success');
+      }
     }, 700);
   });
 }
