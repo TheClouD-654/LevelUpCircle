@@ -88,14 +88,27 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       localStorage.setItem(submissionsKey, JSON.stringify(updated));
     }
 
-    // Placeholder. Next step: replace with real backend call to create Instamojo payment session.
-    window.setTimeout(() => {
+    try {
+      const paymentResponse = await fetch('/api/payments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submission)
+      });
+
+      const paymentPayload = await paymentResponse.json().catch(() => ({}));
+      if (!paymentResponse.ok || !paymentPayload.ok || !paymentPayload.checkoutUrl) {
+        throw new Error(paymentPayload.message || 'Unable to create payment session');
+      }
+
+      setMessage('Redirecting to secure payment...', 'success');
+      window.location.href = paymentPayload.checkoutUrl;
+    } catch (error) {
       syncContinueState();
       if (serverSaved) {
-        setMessage('Buyer info saved securely. Soon the payment and all materials will be available.', 'success');
+        setMessage('Buyer info saved, but payment session failed. Please try again.', 'error');
       } else {
-        setMessage('Buyer info saved locally. Configure KV to store centrally.', 'success');
+        setMessage('Could not start payment right now. Please try again.', 'error');
       }
-    }, 700);
+    }
   });
 }
