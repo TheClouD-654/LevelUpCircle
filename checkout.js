@@ -1,8 +1,8 @@
-const form = document.querySelector('#access-form');
+const form = document.querySelector('#checkout-form');
 const messageEl = document.querySelector('#form-message');
 const continueBtn = document.querySelector('#continue-btn');
 const consentCheckbox = document.querySelector('#consent-checkbox');
-const accessPriceEl = document.querySelector('#access-new-price');
+const checkoutPriceEl = document.querySelector('#checkout-new-price');
 
 if (form && messageEl && continueBtn && consentCheckbox) {
   const setMessage = (text, type) => {
@@ -17,7 +17,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
 
   const readDisplayedUsdAmount = () => {
     const fallback = 1.99;
-    const raw = String(accessPriceEl?.textContent || '').trim();
+    const raw = String(checkoutPriceEl?.textContent || '').trim();
     const numeric = Number(raw.replace(/[^0-9.]/g, ''));
     return Number.isFinite(numeric) && numeric > 0 ? numeric : fallback;
   };

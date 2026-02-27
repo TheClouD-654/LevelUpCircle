@@ -12,7 +12,17 @@
     },
     {
       "source": "/access.html",
-      "destination": "/access",
+      "destination": "/checkout",
+      "permanent": true
+    },
+    {
+      "source": "/checkout.html",
+      "destination": "/checkout",
+      "permanent": true
+    },
+    {
+      "source": "/access",
+      "destination": "/checkout",
       "permanent": true
     },
     {
@@ -47,8 +57,8 @@
       "destination": "/help.html"
     },
     {
-      "source": "/access",
-      "destination": "/access.html"
+      "source": "/checkout",
+      "destination": "/checkout.html"
     },
     {
       "source": "/help-success",
