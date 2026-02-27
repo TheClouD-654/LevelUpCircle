@@ -58,8 +58,8 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       email,
       phone,
       product: 'LevelUp Circle Starter Bundle (ZIP)',
-      amount: 1.99,
-      currency: 'USD',
+      amount: 9,
+      currency: 'INR',
       createdAt: new Date().toISOString()
     };
 
