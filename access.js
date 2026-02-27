@@ -2,6 +2,7 @@ const form = document.querySelector('#access-form');
 const messageEl = document.querySelector('#form-message');
 const continueBtn = document.querySelector('#continue-btn');
 const consentCheckbox = document.querySelector('#consent-checkbox');
+const accessPriceEl = document.querySelector('#access-new-price');
 
 if (form && messageEl && continueBtn && consentCheckbox) {
   const setMessage = (text, type) => {
@@ -12,6 +13,13 @@ if (form && messageEl && continueBtn && consentCheckbox) {
 
   const syncContinueState = () => {
     continueBtn.disabled = !consentCheckbox.checked;
+  };
+
+  const readDisplayedUsdAmount = () => {
+    const fallback = 1.99;
+    const raw = String(accessPriceEl?.textContent || '').trim();
+    const numeric = Number(raw.replace(/[^0-9.]/g, ''));
+    return Number.isFinite(numeric) && numeric > 0 ? numeric : fallback;
   };
 
   consentCheckbox.addEventListener('change', () => {
@@ -58,8 +66,8 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       email,
       phone,
       product: 'LevelUp Circle Starter Bundle (ZIP)',
-      amount: 9,
-      currency: 'INR',
+      amount: readDisplayedUsdAmount(),
+      currency: 'USD',
       createdAt: new Date().toISOString()
     };
 

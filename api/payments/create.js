@@ -46,8 +46,20 @@ module.exports = async (req, res) => {
   const email = String(body.email || '').trim();
   const phone = String(body.phone || '').trim();
   const purpose = String(body.product || 'LevelUp Circle Starter Bundle (ZIP)').trim();
+  const inputCurrency = String(body.currency || 'USD').trim().toUpperCase();
   const amountNumber = Number(body.amount || 1.99);
-  const amount = Number.isFinite(amountNumber) ? amountNumber.toFixed(2) : '1.99';
+  const usdToInrRate = Number(process.env.USD_TO_INR_RATE || 83);
+  const minInrAmount = Number(process.env.INSTAMOJO_MIN_INR_AMOUNT || 9);
+  const safeRate = Number.isFinite(usdToInrRate) && usdToInrRate > 0 ? usdToInrRate : 83;
+  const safeMinInr = Number.isFinite(minInrAmount) && minInrAmount > 0 ? minInrAmount : 9;
+  const safeInputAmount = Number.isFinite(amountNumber) && amountNumber > 0 ? amountNumber : 1.99;
+
+  let chargeInrAmount = safeInputAmount;
+  if (inputCurrency === 'USD') {
+    chargeInrAmount = Math.ceil(safeInputAmount * safeRate);
+  }
+  chargeInrAmount = Math.max(safeMinInr, chargeInrAmount);
+  const amount = chargeInrAmount.toFixed(2);
 
   if (!buyerName || !email) {
     return json(res, 400, { ok: false, message: 'Name and email are required' });
@@ -98,7 +110,13 @@ module.exports = async (req, res) => {
       return json(res, 502, { ok: false, message });
     }
 
-    return json(res, 200, { ok: true, checkoutUrl, paymentRequestId: result.payment_request.id });
+    return json(res, 200, {
+      ok: true,
+      checkoutUrl,
+      paymentRequestId: result.payment_request.id,
+      chargedCurrency: 'INR',
+      chargedAmount: amount
+    });
   } catch (error) {
     return json(res, 500, { ok: false, message: 'Server error while creating payment request' });
   }
