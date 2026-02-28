@@ -31,6 +31,7 @@ const setPaymentLoadingMode = () => {
   deliveryPanelEl.hidden = false;
   deliveryNameEl.textContent = 'Starter Bundle ZIP';
   deliveryMetaEl.textContent = 'Checking payment status with Instamojo...';
+  downloadBtnEl.removeAttribute('href');
   downloadBtnEl.hidden = true;
   emailStatusEl.textContent = '';
 };
@@ -42,6 +43,7 @@ const setPaymentErrorMode = (message) => {
   bodyEl.textContent = message || 'Please wait a minute and refresh this page, or contact support with your payment reference.';
   deliveryPanelEl.hidden = false;
   deliveryMetaEl.textContent = 'If money was deducted, your file will still be delivered once verification completes.';
+  downloadBtnEl.removeAttribute('href');
   downloadBtnEl.hidden = true;
   emailStatusEl.textContent = '';
 };

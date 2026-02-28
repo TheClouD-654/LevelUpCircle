@@ -46,34 +46,68 @@ const kvSet = async (key, value) => {
   return response.ok;
 };
 
+const normalizeStatus = (value) => String(value || '').trim().toLowerCase();
+
+const isSuccessfulStatus = (value) => {
+  const status = normalizeStatus(value);
+  return status === 'credit' || status === 'successful' || status === 'success' || status === 'completed';
+};
+
+const pickPaymentFromPayload = (payload, paymentId) => {
+  const direct = payload?.payment || null;
+  const listFromRequest = Array.isArray(payload?.payment_request?.payments) ? payload.payment_request.payments : [];
+  const listFromRoot = Array.isArray(payload?.payments) ? payload.payments : [];
+  const combined = [direct, ...listFromRequest, ...listFromRoot].filter(Boolean);
+
+  const exact = combined.find((p) => String(p.payment_id || p.id || '').trim() === paymentId);
+  return exact || direct || combined[0] || null;
+};
+
 const verifyInstamojoPayment = async ({ paymentRequestId, paymentId, apiKey, authToken, baseEndpoint }) => {
-  const endpoint = `${baseEndpoint.replace(/\/$/, '')}/payment-requests/${paymentRequestId}/${paymentId}/`;
-  const response = await fetch(endpoint, {
-    method: 'GET',
-    headers: {
-      'X-Api-Key': apiKey,
-      'X-Auth-Token': authToken
+  const headers = {
+    'X-Api-Key': apiKey,
+    'X-Auth-Token': authToken
+  };
+  const root = baseEndpoint.replace(/\/$/, '');
+  const endpoints = [
+    `${root}/payment-requests/${paymentRequestId}/${paymentId}/`,
+    `${root}/payment-requests/${paymentRequestId}/`
+  ];
+
+  let lastMessage = 'Unable to verify payment with Instamojo';
+
+  for (const endpoint of endpoints) {
+    const response = await fetch(endpoint, { method: 'GET', headers });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || !payload?.success) {
+      lastMessage = payload?.message || lastMessage;
+      continue;
     }
-  });
 
-  const payload = await response.json().catch(() => ({}));
-  const payment = payload?.payment || {};
-  const paidStatus = String(payment.status || '').trim();
-  const relatedRequestId = String(payment.payment_request || paymentRequestId).trim();
+    const payment = pickPaymentFromPayload(payload, paymentId);
+    const resolvedPaymentId = String(payment?.payment_id || payment?.id || '').trim();
+    const resolvedRequestId = String(
+      payment?.payment_request || payment?.payment_request_id || payload?.payment_request?.id || paymentRequestId
+    ).trim();
+    const status = String(payment?.status || payment?.payment_status || '').trim();
 
-  if (!response.ok || !payload?.success) {
-    return { ok: false, message: payload?.message || 'Unable to verify payment with Instamojo' };
+    if (resolvedPaymentId && resolvedPaymentId !== paymentId) {
+      lastMessage = 'Payment ID mismatch';
+      continue;
+    }
+    if (resolvedRequestId && resolvedRequestId !== paymentRequestId) {
+      lastMessage = 'Payment request mismatch';
+      continue;
+    }
+    if (!isSuccessfulStatus(status)) {
+      lastMessage = `Payment not completed. Current status: ${status || 'unknown'}`;
+      continue;
+    }
+
+    return { ok: true, payment: { ...payment, status } };
   }
 
-  if (!relatedRequestId || relatedRequestId !== paymentRequestId) {
-    return { ok: false, message: 'Payment request mismatch' };
-  }
-
-  if (paidStatus.toLowerCase() !== 'credit') {
-    return { ok: false, message: `Payment not completed. Current status: ${paidStatus || 'unknown'}` };
-  }
-
-  return { ok: true, payment };
+  return { ok: false, message: lastMessage };
 };
 
 const buildDeliveryLink = ({ origin, paymentId, paymentRequestId, email, productId }) => {
