@@ -9,6 +9,7 @@ const productSubtitleEl = document.querySelector('#checkout-product-subtitle');
 
 const params = new URLSearchParams(window.location.search);
 const requestedProductId = String(params.get('product_id') || 'starter_bundle').trim();
+let redirectingToPayment = false;
 let selectedProduct = {
   id: 'starter_bundle',
   purpose: 'LevelUp Circle Starter Bundle (ZIP)',
@@ -53,6 +54,20 @@ if (form && messageEl && continueBtn && consentCheckbox) {
   const syncContinueState = () => {
     continueBtn.disabled = !consentCheckbox.checked;
   };
+
+  const hasCheckoutProgress = () => {
+    const name = String(form.querySelector('#buyer-name')?.value || '').trim();
+    const email = String(form.querySelector('#buyer-email')?.value || '').trim();
+    const phone = String(form.querySelector('#buyer-phone')?.value || '').trim();
+    return Boolean(name || email || phone || consentCheckbox.checked);
+  };
+
+  window.addEventListener('beforeunload', (event) => {
+    // Browser may show a generic confirmation dialog only.
+    if (redirectingToPayment || !hasCheckoutProgress()) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
 
   consentCheckbox.addEventListener('change', () => {
     syncContinueState();
@@ -142,6 +157,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       }
 
       setMessage('Redirecting to secure payment...', 'success');
+      redirectingToPayment = true;
       window.location.href = paymentPayload.checkoutUrl;
     } catch (error) {
       syncContinueState();

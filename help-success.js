@@ -8,6 +8,12 @@ const downloadBtnEl = document.getElementById('downloadBtn');
 const emailStatusEl = document.getElementById('emailStatus');
 
 const params = new URLSearchParams(window.location.search);
+const isPaymentContext = Boolean(
+  String(params.get('payment_request_id') || '').trim() &&
+  String(params.get('payment_id') || '').trim()
+);
+let deliveryReady = false;
+let allowNavigation = false;
 
 const sanitizeText = (value) => String(value || '').replace(/[<>]/g, '').trim();
 
@@ -30,6 +36,7 @@ const setPaymentLoadingMode = () => {
 };
 
 const setPaymentErrorMode = (message) => {
+  deliveryReady = false;
   kickerEl.textContent = 'Payment Pending';
   titleEl.textContent = 'We could not verify payment yet.';
   bodyEl.textContent = message || 'Please wait a minute and refresh this page, or contact support with your payment reference.';
@@ -54,11 +61,40 @@ const setPaymentSuccessMode = (payload) => {
   if (downloadUrl) {
     downloadBtnEl.href = downloadUrl;
     downloadBtnEl.hidden = false;
+    deliveryReady = true;
   }
 
   if (emailMessage) {
     emailStatusEl.textContent = emailMessage;
   }
+};
+
+const setupLeaveGuards = () => {
+  if (!isPaymentContext) return;
+
+  const getLeaveMessage = () => (deliveryReady
+    ? 'If you close this page, this download view will disappear. Your docs are also sent to your email.'
+    : 'Do you really want to leave this page? Payment processing may still be in progress.');
+
+  const beforeUnloadHandler = (event) => {
+    if (allowNavigation) return;
+    event.preventDefault();
+    event.returnValue = '';
+  };
+  window.addEventListener('beforeunload', beforeUnloadHandler);
+
+  // Trap one back action to show a custom confirm dialog.
+  window.history.pushState({ checkoutGuard: true }, '', window.location.href);
+  window.addEventListener('popstate', () => {
+    const confirmed = window.confirm(getLeaveMessage());
+    if (confirmed) {
+      allowNavigation = true;
+      window.removeEventListener('beforeunload', beforeUnloadHandler);
+      window.history.go(-1);
+      return;
+    }
+    window.history.pushState({ checkoutGuard: true }, '', window.location.href);
+  });
 };
 
 const runPaymentFlow = async () => {
@@ -95,3 +131,4 @@ const runPaymentFlow = async () => {
 };
 
 runPaymentFlow();
+setupLeaveGuards();
