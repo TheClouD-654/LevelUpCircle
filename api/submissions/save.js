@@ -33,6 +33,7 @@ module.exports = async (req, res) => {
   }
 
   const body = await parseJsonBody(req);
+  const sessionId = String(body.sessionId || '').trim();
   const name = String(body.name || '').trim();
   const email = String(body.email || '').trim();
   const phone = String(body.phone || '').trim();
@@ -45,12 +46,14 @@ module.exports = async (req, res) => {
   }
 
   const entry = {
+    sessionId: sessionId || `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
     name,
     email,
     phone,
     product,
     amount,
     currency,
+    paymentStatus: 'pending',
     createdAt: new Date().toISOString()
   };
 

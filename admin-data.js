@@ -16,9 +16,16 @@ const renderRows = (entries) => {
   if (!rowsEl) return;
 
   if (!entries.length) {
-    rowsEl.innerHTML = '<tr><td colspan="6">No buyer data found in this browser yet.</td></tr>';
+    rowsEl.innerHTML = '<tr><td colspan="7">No buyer data found in this browser yet.</td></tr>';
     return;
   }
+
+  const labelStatus = (value) => {
+    const status = String(value || 'pending').toLowerCase();
+    if (status === 'successful') return 'successful';
+    if (status === 'cancelled' || status === 'canceled') return 'cancelled';
+    return 'pending';
+  };
 
   rowsEl.innerHTML = entries.map((entry) => `
     <tr>
@@ -28,6 +35,7 @@ const renderRows = (entries) => {
       <td>${entry.phone || '-'}</td>
       <td>${entry.product || '-'}</td>
       <td>${entry.currency || ''} ${entry.amount ?? '-'}</td>
+      <td>${labelStatus(entry.paymentStatus)}</td>
     </tr>
   `).join('');
 };

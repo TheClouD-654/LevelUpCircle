@@ -14,8 +14,33 @@ const isPaymentContext = Boolean(
 );
 let deliveryReady = false;
 let allowNavigation = false;
+let statusSynced = false;
 
 const sanitizeText = (value) => String(value || '').replace(/[<>]/g, '').trim();
+const paymentRequestId = String(params.get('payment_request_id') || '').trim();
+const paymentId = String(params.get('payment_id') || '').trim();
+const paymentStatusQuery = String(params.get('payment_status') || '').trim();
+
+const syncSubmissionStatus = async (status) => {
+  if (!paymentRequestId || !paymentId) return;
+  if (statusSynced && status === 'cancelled') return;
+  try {
+    await fetch('/api/submissions/mark-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        paymentRequestId,
+        paymentId,
+        status
+      })
+    });
+    if (status === 'successful') {
+      statusSynced = true;
+    }
+  } catch {
+    // Best effort.
+  }
+};
 
 const setSupportMode = () => {
   const name = sanitizeText(params.get('name'));
@@ -100,15 +125,17 @@ const setupLeaveGuards = () => {
 };
 
 const runPaymentFlow = async () => {
-  const paymentRequestId = String(params.get('payment_request_id') || '').trim();
-  const paymentId = String(params.get('payment_id') || '').trim();
-
   if (!paymentRequestId || !paymentId) {
     setSupportMode();
     return;
   }
 
   setPaymentLoadingMode();
+
+  const normalizedQueryStatus = paymentStatusQuery.toLowerCase();
+  if (normalizedQueryStatus && normalizedQueryStatus !== 'credit' && normalizedQueryStatus !== 'successful') {
+    await syncSubmissionStatus('cancelled');
+  }
 
   try {
     const response = await fetch('/api/payments/finalize', {
@@ -127,8 +154,10 @@ const runPaymentFlow = async () => {
     }
 
     setPaymentSuccessMode(payload);
+    await syncSubmissionStatus('successful');
   } catch (error) {
     setPaymentErrorMode(error?.message);
+    await syncSubmissionStatus('cancelled');
   }
 };
 

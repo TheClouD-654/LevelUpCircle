@@ -10,6 +10,9 @@ const productSubtitleEl = document.querySelector('#checkout-product-subtitle');
 const params = new URLSearchParams(window.location.search);
 const requestedProductId = String(params.get('product_id') || 'starter_bundle').trim();
 let redirectingToPayment = false;
+const checkoutSessionId = (typeof crypto !== 'undefined' && crypto.randomUUID)
+  ? crypto.randomUUID()
+  : `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
 let selectedProduct = {
   id: 'starter_bundle',
   purpose: 'LevelUp Circle Starter Bundle (ZIP)',
@@ -109,6 +112,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     setMessage('Preparing secure checkout...', 'success');
 
     const submission = {
+      sessionId: checkoutSessionId,
       productId: selectedProduct.id,
       name,
       email,
@@ -116,6 +120,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       product: selectedProduct.purpose,
       amount: Number(selectedProduct.displayAmount || 1),
       currency: String(selectedProduct.displayCurrency || 'INR'),
+      paymentStatus: 'pending',
       createdAt: new Date().toISOString()
     };
 

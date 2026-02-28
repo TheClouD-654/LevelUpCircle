@@ -133,6 +133,7 @@ module.exports = async (req, res) => {
       const mappingKey = `${KV_PAYMENT_REQUEST_KEY_PREFIX}${paymentRequestId}`;
       const mappingValue = JSON.stringify({
         productId: product.id,
+        sessionId: String(body.sessionId || '').trim(),
         purpose,
         buyerEmail: email,
         createdAt: new Date().toISOString()
