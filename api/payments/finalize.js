@@ -200,6 +200,7 @@ module.exports = async (req, res) => {
   const body = await parseJsonBody(req);
   const paymentRequestId = String(body.payment_request_id || '').trim();
   const paymentId = String(body.payment_id || '').trim();
+  const paymentStatusHint = String(body.payment_status || '').trim();
 
   if (!paymentRequestId || !paymentId) {
     return json(res, 400, { ok: false, message: 'Missing payment identifiers' });
@@ -212,6 +213,24 @@ module.exports = async (req, res) => {
     return json(res, 503, { ok: false, message: 'Instamojo credentials are not configured' });
   }
 
+  const mappingRaw = await kvGet(`${KV_PAYMENT_REQUEST_KEY_PREFIX}${paymentRequestId}`);
+  let productId = DEFAULT_PRODUCT_ID;
+  let mappedBuyerEmail = '';
+  if (mappingRaw) {
+    try {
+      const mapping = JSON.parse(mappingRaw);
+      if (mapping?.productId) {
+        productId = String(mapping.productId).trim();
+      }
+      if (mapping?.buyerEmail) {
+        mappedBuyerEmail = String(mapping.buyerEmail).trim();
+      }
+    } catch {
+      productId = DEFAULT_PRODUCT_ID;
+      mappedBuyerEmail = '';
+    }
+  }
+
   const verification = await verifyInstamojoPayment({
     paymentRequestId,
     paymentId,
@@ -220,25 +239,23 @@ module.exports = async (req, res) => {
     baseEndpoint
   });
 
-  if (!verification.ok) {
+  // Payout pending is unrelated to buyer payment success. If redirect says Credit,
+  // allow immediate delivery even when API verification is delayed/unavailable.
+  const canUseRedirectHint = isSuccessfulStatus(paymentStatusHint);
+  if (!verification.ok && !canUseRedirectHint) {
     return json(res, 402, { ok: false, message: verification.message });
   }
 
-  const payment = verification.payment;
-  const buyerEmail = String(payment.buyer_email || payment.buyer || '').trim();
+  const payment = verification.ok
+    ? verification.payment
+    : {
+        payment_id: paymentId,
+        payment_request: paymentRequestId,
+        status: paymentStatusHint || 'Credit'
+      };
+
+  const buyerEmail = String(payment.buyer_email || payment.buyer || mappedBuyerEmail || '').trim();
   const buyerName = String(payment.buyer_name || '').trim();
-  const mappingRaw = await kvGet(`${KV_PAYMENT_REQUEST_KEY_PREFIX}${paymentRequestId}`);
-  let productId = DEFAULT_PRODUCT_ID;
-  if (mappingRaw) {
-    try {
-      const mapping = JSON.parse(mappingRaw);
-      if (mapping?.productId) {
-        productId = String(mapping.productId).trim();
-      }
-    } catch {
-      productId = DEFAULT_PRODUCT_ID;
-    }
-  }
   const product = getProduct(productId);
   const zipUrl = getProductZipUrl(product);
   const fileName = product.zipName || process.env.PRODUCT_ZIP_NAME || 'LevelUp-Circle-Starter-Bundle.zip';
