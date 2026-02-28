@@ -1,5 +1,5 @@
 (() => {
-  const SHOW_DEV_NOTICE = false;
+  const SHOW_DEV_NOTICE = true;
   if (!SHOW_DEV_NOTICE) return;
 
   const style = document.createElement('style');
