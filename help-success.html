@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Message Received | The LevelUp Circle</title>
+  <title>Status | The LevelUp Circle</title>
   <link rel="icon" type="image/png" href="images/bglevelupcircle.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,12 +15,18 @@
     <section class="help-section">
       <div class="container success-wrap">
         <article class="success-card">
-          <p class="success-kicker">Message Sent</p>
+          <p class="success-kicker" id="successKicker">Message Sent</p>
           <h1 id="successTitle">We received your message.</h1>
-          <p>
-            Our support team will review it and reply within 24 hours.
+          <p id="successBody">
+            Our support team will review your message and reply within 24 hours.
             If your issue is urgent, email <strong>support@levelupcircle.com</strong>.
           </p>
+          <section id="deliveryPanel" class="delivery-panel" hidden>
+            <h2 id="deliveryName">Starter Bundle ZIP</h2>
+            <p id="deliveryMeta">Preparing your file details...</p>
+            <a id="downloadBtn" class="btn btn-primary" href="#" hidden download>Download ZIP</a>
+            <p id="emailStatus" class="delivery-email"></p>
+          </section>
           <div class="success-actions">
             <a href="/" class="btn btn-primary">Back to Home</a>
             <a href="/help" class="btn btn-secondary">Send Another</a>
@@ -29,14 +35,7 @@
       </div>
     </section>
   </main>
-  <script>
-    const params = new URLSearchParams(window.location.search);
-    const name = (params.get('name') || '').trim();
-    if (name) {
-      const safeName = name.replace(/[<>]/g, '');
-      document.getElementById('successTitle').textContent = `Thanks ${safeName}, we received your message.`;
-    }
-  </script>
+  <script src="help-success.js" defer></script>
   <script src="dev-notice.js" defer></script>
   <script defer src="/_vercel/insights/script.js"></script>
   <script defer src="/_vercel/speed-insights/script.js"></script>

@@ -222,6 +222,29 @@ body {
   flex-wrap: wrap;
 }
 
+.delivery-panel {
+  margin-top: 18px;
+  border: 1px solid var(--card-border);
+  background: rgba(15, 28, 44, 0.62);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.delivery-panel h2 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.delivery-panel .btn {
+  margin-top: 10px;
+}
+
+.delivery-email {
+  margin-top: 10px;
+  color: #8ce4bf;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 900px) {
   .help-grid,
   .help-form {

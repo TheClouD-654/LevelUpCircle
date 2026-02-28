@@ -3,6 +3,45 @@ const messageEl = document.querySelector('#form-message');
 const continueBtn = document.querySelector('#continue-btn');
 const consentCheckbox = document.querySelector('#consent-checkbox');
 const checkoutPriceEl = document.querySelector('#checkout-new-price');
+const checkoutOldPriceEl = document.querySelector('#checkout-old-price');
+const productTitleEl = document.querySelector('#checkout-product-title');
+const productSubtitleEl = document.querySelector('#checkout-product-subtitle');
+
+const params = new URLSearchParams(window.location.search);
+const requestedProductId = String(params.get('product_id') || 'starter_bundle').trim();
+let selectedProduct = {
+  id: 'starter_bundle',
+  purpose: 'LevelUp Circle Starter Bundle (ZIP)',
+  title: 'The LevelUp Circle Starter Bundle',
+  subtitle: '5 beginner trading PDFs delivered in one ZIP file.',
+  oldPriceDisplay: 'Rs 3',
+  newPriceDisplay: 'Rs 1',
+  displayAmount: 1,
+  displayCurrency: 'INR'
+};
+
+const applyProductView = (product) => {
+  if (!product) return;
+  selectedProduct = { ...selectedProduct, ...product };
+  if (productTitleEl) productTitleEl.textContent = selectedProduct.title || selectedProduct.purpose;
+  if (productSubtitleEl) productSubtitleEl.textContent = selectedProduct.subtitle || '';
+  if (checkoutOldPriceEl) checkoutOldPriceEl.textContent = selectedProduct.oldPriceDisplay || '';
+  if (checkoutPriceEl) checkoutPriceEl.textContent = selectedProduct.newPriceDisplay || '';
+};
+
+const loadProduct = async () => {
+  try {
+    const response = await fetch(`/api/products/get?product_id=${encodeURIComponent(requestedProductId)}`);
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok && payload?.ok && payload.product) {
+      applyProductView(payload.product);
+    }
+  } catch {
+    // Keep default fallback product.
+  }
+};
+
+loadProduct();
 
 if (form && messageEl && continueBtn && consentCheckbox) {
   const setMessage = (text, type) => {
@@ -13,13 +52,6 @@ if (form && messageEl && continueBtn && consentCheckbox) {
 
   const syncContinueState = () => {
     continueBtn.disabled = !consentCheckbox.checked;
-  };
-
-  const readDisplayedUsdAmount = () => {
-    const fallback = 1.99;
-    const raw = String(checkoutPriceEl?.textContent || '').trim();
-    const numeric = Number(raw.replace(/[^0-9.]/g, ''));
-    return Number.isFinite(numeric) && numeric > 0 ? numeric : fallback;
   };
 
   consentCheckbox.addEventListener('change', () => {
@@ -62,12 +94,13 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     setMessage('Preparing secure checkout...', 'success');
 
     const submission = {
+      productId: selectedProduct.id,
       name,
       email,
       phone,
-      product: 'LevelUp Circle Starter Bundle (ZIP)',
-      amount: readDisplayedUsdAmount(),
-      currency: 'USD',
+      product: selectedProduct.purpose,
+      amount: Number(selectedProduct.displayAmount || 1),
+      currency: String(selectedProduct.displayCurrency || 'INR'),
       createdAt: new Date().toISOString()
     };
 

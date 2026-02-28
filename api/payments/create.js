@@ -1,3 +1,7 @@
+const { getProduct } = require('../../data/products');
+
+const KV_PAYMENT_REQUEST_KEY_PREFIX = 'levelup:payment_request:';
+
 const json = (res, status, body) => {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json');
@@ -27,6 +31,17 @@ const buildOrigin = (req) => {
   return host ? `${proto}://${host}` : '';
 };
 
+const kvSet = async (key, value) => {
+  const kvUrl = process.env.KV_REST_API_URL || '';
+  const kvToken = process.env.KV_REST_API_TOKEN || '';
+  if (!kvUrl || !kvToken) return false;
+
+  const response = await fetch(`${kvUrl}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}`, {
+    headers: { Authorization: `Bearer ${kvToken}` }
+  });
+  return response.ok;
+};
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -42,12 +57,13 @@ module.exports = async (req, res) => {
   }
 
   const body = await parseJsonBody(req);
+  const product = getProduct(body.productId);
   const buyerName = String(body.name || '').trim();
   const email = String(body.email || '').trim();
   const phone = String(body.phone || '').trim();
-  const purpose = String(body.product || 'LevelUp Circle Starter Bundle (ZIP)').trim();
-  const inputCurrency = String(body.currency || 'USD').trim().toUpperCase();
-  const amountNumber = Number(body.amount || 1.99);
+  const purpose = String(product.purpose || body.product || 'LevelUp Circle Starter Bundle (ZIP)').trim();
+  const inputCurrency = String(product.chargeCurrency || body.currency || 'INR').trim().toUpperCase();
+  const amountNumber = Number(product.chargeAmount || body.amount || 1);
   const usdToInrRate = Number(process.env.USD_TO_INR_RATE || 83);
   const minInrAmount = Number(process.env.INSTAMOJO_MIN_INR_AMOUNT || 9);
   const safeRate = Number.isFinite(usdToInrRate) && usdToInrRate > 0 ? usdToInrRate : 83;
@@ -55,8 +71,10 @@ module.exports = async (req, res) => {
   const safeInputAmount = Number.isFinite(amountNumber) && amountNumber > 0 ? amountNumber : 1.99;
 
   let chargeInrAmount = safeInputAmount;
+  let chargedCurrency = inputCurrency;
   if (inputCurrency === 'USD') {
     chargeInrAmount = Math.ceil(safeInputAmount * safeRate);
+    chargedCurrency = 'INR';
   }
   chargeInrAmount = Math.max(safeMinInr, chargeInrAmount);
   const amount = chargeInrAmount.toFixed(2);
@@ -110,11 +128,23 @@ module.exports = async (req, res) => {
       return json(res, 502, { ok: false, message });
     }
 
+    const paymentRequestId = String(result?.payment_request?.id || '').trim();
+    if (paymentRequestId) {
+      const mappingKey = `${KV_PAYMENT_REQUEST_KEY_PREFIX}${paymentRequestId}`;
+      const mappingValue = JSON.stringify({
+        productId: product.id,
+        purpose,
+        buyerEmail: email,
+        createdAt: new Date().toISOString()
+      });
+      await kvSet(mappingKey, mappingValue);
+    }
+
     return json(res, 200, {
       ok: true,
       checkoutUrl,
-      paymentRequestId: result.payment_request.id,
-      chargedCurrency: 'INR',
+      paymentRequestId,
+      chargedCurrency,
       chargedAmount: amount
     });
   } catch (error) {
