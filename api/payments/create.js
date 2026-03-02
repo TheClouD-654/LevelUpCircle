@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
   const product = getProduct(body.productId);
   const buyerName = String(body.name || '').trim();
   const email = String(body.email || '').trim();
-  const phone = String(body.phone || '').trim();
+  const phone = String(body.phone || '').trim().replace(/\D/g, '');
   const purpose = String(product.purpose || body.product || 'LevelUp Circle Starter Bundle (ZIP)').trim();
   const inputCurrency = String(product.chargeCurrency || body.currency || 'INR').trim().toUpperCase();
   const amountNumber = Number(product.chargeAmount || body.amount || 1);
@@ -79,8 +79,12 @@ module.exports = async (req, res) => {
   chargeInrAmount = Math.max(safeMinInr, chargeInrAmount);
   const amount = chargeInrAmount.toFixed(2);
 
-  if (!buyerName || !email) {
-    return json(res, 400, { ok: false, message: 'Name and email are required' });
+  if (!buyerName || !email || !phone) {
+    return json(res, 400, { ok: false, message: 'Name, email, and phone are required' });
+  }
+
+  if (!/^\d{10}$/.test(phone)) {
+    return json(res, 400, { ok: false, message: 'Invalid phone number' });
   }
 
   const origin = buildOrigin(req);
@@ -105,9 +109,7 @@ module.exports = async (req, res) => {
     payload.set('webhook', webhookUrl);
   }
 
-  if (phone) {
-    payload.set('phone', phone);
-  }
+  payload.set('phone', phone);
 
   try {
     const response = await fetch(endpoint, {

@@ -36,13 +36,17 @@ module.exports = async (req, res) => {
   const sessionId = String(body.sessionId || '').trim();
   const name = String(body.name || '').trim();
   const email = String(body.email || '').trim();
-  const phone = String(body.phone || '').trim();
+  const phone = String(body.phone || '').trim().replace(/\D/g, '');
   const product = String(body.product || 'LevelUp Circle Starter Bundle (ZIP)').trim();
   const amount = Number(body.amount || 1.99);
   const currency = String(body.currency || 'USD').trim();
 
-  if (!name || !email) {
-    return json(res, 400, { ok: false, message: 'Name and email are required' });
+  if (!name || !email || !phone) {
+    return json(res, 400, { ok: false, message: 'Name, email, and phone are required' });
+  }
+
+  if (!/^\d{10}$/.test(phone)) {
+    return json(res, 400, { ok: false, message: 'Invalid phone number' });
   }
 
   const entry = {

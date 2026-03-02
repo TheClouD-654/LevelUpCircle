@@ -46,7 +46,16 @@
         <input id="buyer-email" name="buyerEmail" type="email" autocomplete="email" required />
 
         <label for="buyer-phone">Phone</label>
-        <input id="buyer-phone" name="buyerPhone" type="tel" autocomplete="tel" />
+        <input
+          id="buyer-phone"
+          name="buyerPhone"
+          type="tel"
+          inputmode="numeric"
+          pattern="[0-9]{10}"
+          maxlength="10"
+          autocomplete="tel"
+          required
+        />
         
         <p id="form-message" class="form-message" aria-live="polite"></p>
         <label class="consent-check" for="consent-checkbox">
@@ -68,4 +77,3 @@
   <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
-

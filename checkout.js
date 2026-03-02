@@ -89,16 +89,23 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     const formData = new FormData(form);
     const name = String(formData.get('buyerName') || '').trim();
     const email = String(formData.get('buyerEmail') || '').trim();
-    const phone = String(formData.get('buyerPhone') || '').trim();
+    const rawPhone = String(formData.get('buyerPhone') || '').trim();
+    const phone = rawPhone.replace(/\D/g, '');
     const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const phoneOk = /^\d{10}$/.test(phone);
 
-    if (!name || !email) {
-      setMessage('Please fill in your name and email.', 'error');
+    if (!name || !email || !rawPhone) {
+      setMessage('Please fill in your name, email, and phone number.', 'error');
       return;
     }
 
     if (!emailOk) {
       setMessage('Please enter a valid email address.', 'error');
+      return;
+    }
+
+    if (!phoneOk) {
+      setMessage('Invalid phone number.', 'error');
       return;
     }
 
