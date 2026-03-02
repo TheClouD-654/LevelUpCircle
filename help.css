@@ -222,6 +222,12 @@ body {
   flex-wrap: wrap;
 }
 
+.success-secondary {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
 .delivery-panel {
   margin-top: 18px;
   border: 1px solid var(--card-border);

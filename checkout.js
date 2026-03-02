@@ -18,10 +18,10 @@ let selectedProduct = {
   purpose: 'LevelUp Circle Starter Bundle (ZIP)',
   title: 'The LevelUp Circle Starter Bundle',
   subtitle: '5 beginner trading PDFs delivered in one ZIP file.',
-  oldPriceDisplay: 'Rs 3',
-  newPriceDisplay: 'Rs 1',
-  displayAmount: 1,
-  displayCurrency: 'INR'
+  oldPriceDisplay: '$3.99',
+  newPriceDisplay: '$1.99',
+  displayAmount: 1.99,
+  displayCurrency: 'USD'
 };
 
 const applyProductView = (product) => {

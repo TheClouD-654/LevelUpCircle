@@ -6,12 +6,12 @@ const PRODUCTS = {
     title: 'The LevelUp Circle Starter Bundle',
     subtitle: '5 beginner trading PDFs delivered in one ZIP file.',
     purpose: 'LevelUp Circle Starter Bundle (ZIP)',
-    oldPriceDisplay: 'Rs 19',
-    newPriceDisplay: 'Rs 9',
-    displayAmount: 9,
-    displayCurrency: 'INR',
-    chargeAmount: 9,
-    chargeCurrency: 'INR',
+    oldPriceDisplay: '$3.99',
+    newPriceDisplay: '$1.99',
+    displayAmount: 1.99,
+    displayCurrency: 'USD',
+    chargeAmount: 1.99,
+    chargeCurrency: 'USD',
     zipName: 'LevelUp-Circle-Starter-Bundle.zip',
     zipUrlEnvKey: 'PRODUCT_STARTER_ZIP_URL'
   }
