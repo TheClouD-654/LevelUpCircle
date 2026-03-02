@@ -120,6 +120,11 @@ body {
   margin-bottom: 12px;
 }
 
+.star{
+  color: #e45d27;
+  font-size: 1.2rem;
+}
+
 .price-row {
   display: flex;
   align-items: baseline;
