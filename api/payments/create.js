@@ -1,5 +1,6 @@
 const { getProduct } = require('../../data/products');
 const { readAbsoluteUrl, readEnv, readNumberEnv } = require('../_lib/env');
+const { formatErrorMessage, pickApiErrorMessage } = require('../_lib/error-format');
 
 const KV_PAYMENT_REQUEST_KEY_PREFIX = 'levelup:payment_request:';
 
@@ -146,10 +147,8 @@ module.exports = async (req, res) => {
     const checkoutUrl = result?.payment_request?.longurl || '';
 
     if (!response.ok || !result?.success || !checkoutUrl) {
-      const message = String(
-        result?.message ||
-        result?.error ||
-        responseText ||
+      const message = pickApiErrorMessage(
+        result && Object.keys(result).length ? result : responseText,
         'Instamojo payment request creation failed'
       ).replace(/\s+/g, ' ').trim();
       return json(res, 502, {
@@ -182,7 +181,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     return json(res, 500, {
       ok: false,
-      message: error?.message || 'Server error while creating payment request'
+      message: formatErrorMessage(error, 'Server error while creating payment request')
     });
   }
 };

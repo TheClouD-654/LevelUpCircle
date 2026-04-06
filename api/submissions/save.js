@@ -1,4 +1,5 @@
 const { readAbsoluteUrl, readEnv } = require('../_lib/env');
+const { formatErrorMessage } = require('../_lib/error-format');
 
 const KV_LIST_KEY = 'levelup:buyer_submissions';
 const MAX_RECORDS = 500;
@@ -86,7 +87,7 @@ module.exports = async (req, res) => {
   } catch (error) {
     return json(res, 500, {
       ok: false,
-      message: error?.message || 'Server error while saving submission'
+      message: formatErrorMessage(error, 'Server error while saving submission')
     });
   }
 };
