@@ -168,7 +168,11 @@ module.exports = async (req, res) => {
         buyerEmail: email,
         createdAt: new Date().toISOString()
       });
-      await kvSet(mappingKey, mappingValue);
+      try {
+        await kvSet(mappingKey, mappingValue);
+      } catch {
+        // Do not block checkout if KV mapping storage is temporarily unavailable.
+      }
     }
 
     return json(res, 200, {
