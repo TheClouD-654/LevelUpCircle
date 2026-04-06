@@ -48,6 +48,11 @@ const loadProduct = async () => {
 loadProduct();
 
 if (form && messageEl && continueBtn && consentCheckbox) {
+  const toUserFacingError = (value) => String(value || '')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
   const setMessage = (text, type) => {
     messageEl.textContent = text;
     messageEl.className = 'form-message';
@@ -134,6 +139,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     localStorage.setItem('levelup_buyer_info', JSON.stringify(submission));
 
     let serverSaved = false;
+    let saveError = '';
     try {
       const response = await fetch('/api/submissions/save', {
         method: 'POST',
@@ -144,9 +150,12 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       const payload = await response.json().catch(() => ({}));
       if (response.ok && payload.ok) {
         serverSaved = true;
+      } else {
+        saveError = toUserFacingError(payload.message || 'Could not save buyer info on the server.');
       }
-    } catch (error) {
+    } catch {
       serverSaved = false;
+      saveError = 'Could not save buyer info on the server.';
     }
 
     if (!serverSaved) {
@@ -165,7 +174,9 @@ if (form && messageEl && continueBtn && consentCheckbox) {
 
       const paymentPayload = await paymentResponse.json().catch(() => ({}));
       if (!paymentResponse.ok || !paymentPayload.ok || !paymentPayload.checkoutUrl) {
-        throw new Error(paymentPayload.message || 'Unable to create payment session');
+        throw new Error(
+          toUserFacingError(paymentPayload.message || 'Unable to create payment session')
+        );
       }
 
       setMessage('Redirecting to secure payment...', 'success');
@@ -173,8 +184,13 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       window.location.href = paymentPayload.checkoutUrl;
     } catch (error) {
       syncContinueState();
-      if (serverSaved) {
+      const paymentError = toUserFacingError(error?.message || '');
+      if (paymentError && paymentError !== 'Unable to create payment session') {
+        setMessage(paymentError, 'error');
+      } else if (serverSaved) {
         setMessage('Buyer info saved, but payment session failed. Please try again.', 'error');
+      } else if (saveError) {
+        setMessage(`${saveError} Payment could not start.`, 'error');
       } else {
         setMessage('Could not start payment right now. Please try again.', 'error');
       }

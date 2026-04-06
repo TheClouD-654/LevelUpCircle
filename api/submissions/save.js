@@ -1,3 +1,5 @@
+const { readAbsoluteUrl, readEnv } = require('../_lib/env');
+
 const KV_LIST_KEY = 'levelup:buyer_submissions';
 const MAX_RECORDS = 500;
 
@@ -25,8 +27,8 @@ module.exports = async (req, res) => {
     return json(res, 405, { ok: false, message: 'Method not allowed' });
   }
 
-  const kvUrl = process.env.KV_REST_API_URL || '';
-  const kvToken = process.env.KV_REST_API_TOKEN || '';
+  const kvUrl = readAbsoluteUrl('KV_REST_API_URL');
+  const kvToken = readEnv('KV_REST_API_TOKEN');
 
   if (!kvUrl || !kvToken) {
     return json(res, 503, { ok: false, message: 'KV is not configured' });
@@ -82,6 +84,9 @@ module.exports = async (req, res) => {
 
     return json(res, 200, { ok: true, entry });
   } catch (error) {
-    return json(res, 500, { ok: false, message: 'Server error while saving submission' });
+    return json(res, 500, {
+      ok: false,
+      message: error?.message || 'Server error while saving submission'
+    });
   }
 };

@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { readAbsoluteUrl, readEnv } = require('../_lib/env');
 
 const KV_WEBHOOK_KEY = 'levelup:payment_webhooks';
 const MAX_RECORDS = 500;
@@ -51,8 +52,8 @@ const verifyMac = (payload, salt) => {
 };
 
 const saveToKv = async (entry) => {
-  const kvUrl = process.env.KV_REST_API_URL || '';
-  const kvToken = process.env.KV_REST_API_TOKEN || '';
+  const kvUrl = readAbsoluteUrl('KV_REST_API_URL');
+  const kvToken = readEnv('KV_REST_API_TOKEN');
   if (!kvUrl || !kvToken) {
     return;
   }
@@ -76,7 +77,7 @@ module.exports = async (req, res) => {
     return json(res, 405, { ok: false, message: 'Method not allowed' });
   }
 
-  const salt = process.env.INSTAMOJO_PRIVATE_SALT || '';
+  const salt = readEnv('INSTAMOJO_PRIVATE_SALT');
   if (!salt) {
     return json(res, 503, { ok: false, message: 'Instamojo private salt is not configured' });
   }

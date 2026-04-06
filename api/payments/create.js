@@ -1,4 +1,5 @@
 const { getProduct } = require('../../data/products');
+const { readAbsoluteUrl, readEnv, readNumberEnv } = require('../_lib/env');
 
 const KV_PAYMENT_REQUEST_KEY_PREFIX = 'levelup:payment_request:';
 
@@ -21,19 +22,25 @@ const parseJsonBody = (req) => new Promise((resolve) => {
 });
 
 const buildOrigin = (req) => {
-  const explicit = process.env.PUBLIC_SITE_URL || process.env.SITE_URL || '';
+  const explicit = readAbsoluteUrl('PUBLIC_SITE_URL', 'SITE_URL');
   if (explicit) {
-    return explicit.replace(/\/$/, '');
+    return explicit;
   }
 
-  const proto = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host || '';
-  return host ? `${proto}://${host}` : '';
+  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim() || 'https';
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+  if (!host) return '';
+
+  try {
+    return new URL(`${proto}://${host}`).toString().replace(/\/$/, '');
+  } catch {
+    return '';
+  }
 };
 
 const kvSet = async (key, value) => {
-  const kvUrl = process.env.KV_REST_API_URL || '';
-  const kvToken = process.env.KV_REST_API_TOKEN || '';
+  const kvUrl = readAbsoluteUrl('KV_REST_API_URL');
+  const kvToken = readEnv('KV_REST_API_TOKEN');
   if (!kvUrl || !kvToken) return false;
 
   const response = await fetch(`${kvUrl}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}`, {
@@ -48,9 +55,9 @@ module.exports = async (req, res) => {
     return json(res, 405, { ok: false, message: 'Method not allowed' });
   }
 
-  const apiKey = process.env.INSTAMOJO_API_KEY || '';
-  const authToken = process.env.INSTAMOJO_AUTH_TOKEN || '';
-  const baseEndpoint = process.env.INSTAMOJO_API_BASE || 'https://www.instamojo.com/api/1.1';
+  const apiKey = readEnv('INSTAMOJO_API_KEY');
+  const authToken = readEnv('INSTAMOJO_AUTH_TOKEN');
+  const baseEndpoint = readEnv('INSTAMOJO_API_BASE') || 'https://www.instamojo.com/api/1.1';
 
   if (!apiKey || !authToken) {
     return json(res, 503, { ok: false, message: 'Instamojo credentials are not configured' });
@@ -64,8 +71,8 @@ module.exports = async (req, res) => {
   const purpose = String(product.purpose || body.product || 'LevelUp Circle Starter Bundle (ZIP)').trim();
   const inputCurrency = String(product.chargeCurrency || body.currency || 'INR').trim().toUpperCase();
   const amountNumber = Number(product.chargeAmount || body.amount || 1);
-  const usdToInrRate = Number(process.env.USD_TO_INR_RATE || 83);
-  const minInrAmount = Number(process.env.INSTAMOJO_MIN_INR_AMOUNT || 9);
+  const usdToInrRate = readNumberEnv('USD_TO_INR_RATE', 83);
+  const minInrAmount = readNumberEnv('INSTAMOJO_MIN_INR_AMOUNT', 9);
   const safeRate = Number.isFinite(usdToInrRate) && usdToInrRate > 0 ? usdToInrRate : 83;
   const safeMinInr = Number.isFinite(minInrAmount) && minInrAmount > 0 ? minInrAmount : 9;
   const safeInputAmount = Number.isFinite(amountNumber) && amountNumber > 0 ? amountNumber : 1.99;
@@ -93,8 +100,13 @@ module.exports = async (req, res) => {
   }
 
   const redirectUrl = `${origin}/help-success`;
-  const webhookUrl = process.env.INSTAMOJO_WEBHOOK_URL || '';
-  const endpoint = `${baseEndpoint.replace(/\/$/, '')}/payment-requests/`;
+  const webhookUrl = readAbsoluteUrl('INSTAMOJO_WEBHOOK_URL');
+  let endpoint = '';
+  try {
+    endpoint = `${new URL(baseEndpoint).toString().replace(/\/$/, '')}/payment-requests/`;
+  } catch {
+    return json(res, 500, { ok: false, message: 'Instamojo API base URL is invalid' });
+  }
 
   const payload = new URLSearchParams({
     purpose,
@@ -102,7 +114,9 @@ module.exports = async (req, res) => {
     buyer_name: buyerName,
     email,
     redirect_url: redirectUrl,
-    allow_repeated_payments: 'false'
+    allow_repeated_payments: 'false',
+    send_email: 'false',
+    send_sms: 'false'
   });
 
   if (webhookUrl) {
@@ -122,12 +136,27 @@ module.exports = async (req, res) => {
       body: payload.toString()
     });
 
-    const result = await response.json().catch(() => ({}));
+    const responseText = await response.text();
+    let result = {};
+    try {
+      result = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      result = {};
+    }
     const checkoutUrl = result?.payment_request?.longurl || '';
 
     if (!response.ok || !result?.success || !checkoutUrl) {
-      const message = result?.message || 'Instamojo payment request creation failed';
-      return json(res, 502, { ok: false, message });
+      const message = String(
+        result?.message ||
+        result?.error ||
+        responseText ||
+        'Instamojo payment request creation failed'
+      ).replace(/\s+/g, ' ').trim();
+      return json(res, 502, {
+        ok: false,
+        message,
+        upstreamStatus: response.status
+      });
     }
 
     const paymentRequestId = String(result?.payment_request?.id || '').trim();
@@ -151,6 +180,9 @@ module.exports = async (req, res) => {
       chargedAmount: amount
     });
   } catch (error) {
-    return json(res, 500, { ok: false, message: 'Server error while creating payment request' });
+    return json(res, 500, {
+      ok: false,
+      message: error?.message || 'Server error while creating payment request'
+    });
   }
 };

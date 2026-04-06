@@ -1,17 +1,24 @@
 const crypto = require('crypto');
+const { readAbsoluteUrl } = require('../_lib/env');
 
 const base64UrlEncode = (value) => Buffer.from(value, 'utf8').toString('base64url');
 const base64UrlDecode = (value) => Buffer.from(value, 'base64url').toString('utf8');
 
 const buildOrigin = (req) => {
-  const explicit = process.env.PUBLIC_SITE_URL || process.env.SITE_URL || '';
+  const explicit = readAbsoluteUrl('PUBLIC_SITE_URL', 'SITE_URL');
   if (explicit) {
-    return explicit.replace(/\/$/, '');
+    return explicit;
   }
 
-  const proto = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host || '';
-  return host ? `${proto}://${host}` : '';
+  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim() || 'https';
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
+  if (!host) return '';
+
+  try {
+    return new URL(`${proto}://${host}`).toString().replace(/\/$/, '');
+  } catch {
+    return '';
+  }
 };
 
 const signPayload = (payload, secret) => {
