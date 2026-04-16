@@ -393,11 +393,13 @@ module.exports = async (req, res) => {
         status: paymentStatusHint || 'Credit'
       };
 
+  const paymentNotes = payment?.notes && typeof payment.notes === 'object' ? payment.notes : {};
+  const resolvedProductId = String(paymentNotes.product_id || productId || DEFAULT_PRODUCT_ID).trim() || DEFAULT_PRODUCT_ID;
   const buyerEmail = String(
-    payment.email || payment.buyer_email || payment.buyer || mappedBuyerEmail || ''
+    payment.email || payment.buyer_email || payment.buyer || paymentNotes.buyer_email || mappedBuyerEmail || ''
   ).trim();
-  const buyerName = String(payment.notes?.buyer_name || payment.buyer_name || mappedBuyerName || '').trim();
-  const product = getProduct(productId);
+  const buyerName = String(paymentNotes.buyer_name || payment.buyer_name || mappedBuyerName || '').trim();
+  const product = getProduct(resolvedProductId);
   const zipUrl = getProductZipUrl(product);
   const fileName = product.zipName || readEnv('PRODUCT_ZIP_NAME') || 'LevelUp-Circle-Starter-Bundle.zip';
 

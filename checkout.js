@@ -53,6 +53,43 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     .replace(/\s+/g, ' ')
     .trim();
 
+  const persistSubmissionLocally = (submission) => {
+    try {
+      const submissionsKey = 'levelup_buyer_submissions';
+      const existing = JSON.parse(localStorage.getItem(submissionsKey) || '[]');
+      const updated = [submission, ...existing].slice(0, 250);
+      localStorage.setItem(submissionsKey, JSON.stringify(updated));
+    } catch {
+      // Keep checkout moving even if browser storage is unavailable.
+    }
+  };
+
+  const saveSubmissionToServer = async (submission) => {
+    try {
+      const response = await fetch('/api/submissions/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(submission),
+        keepalive: true
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (response.ok && payload.ok) {
+        return { serverSaved: true, saveError: '' };
+      }
+
+      return {
+        serverSaved: false,
+        saveError: toUserFacingError(payload.message || 'Could not save buyer info on the server.')
+      };
+    } catch {
+      return {
+        serverSaved: false,
+        saveError: 'Could not save buyer info on the server.'
+      };
+    }
+  };
+
   const setMessage = (text, type) => {
     messageEl.textContent = text;
     messageEl.className = 'form-message';
@@ -82,7 +119,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       callback(payload);
     };
 
-    const razorpay = new window.Razorpay({
+    const razorpayOptions = {
       key: checkoutOptions.key,
       amount: checkoutOptions.amount,
       currency: checkoutOptions.currency || 'INR',
@@ -91,7 +128,6 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       order_id: safeOrderId,
       prefill: checkoutOptions.prefill || {},
       notes: checkoutOptions.notes || {},
-      theme: checkoutOptions.theme || { color: '#2f8cff' },
       handler: (response) => {
         const resolvedPaymentId = String(response?.razorpay_payment_id || '').trim();
         const resolvedSignature = String(response?.razorpay_signature || '').trim();
@@ -108,7 +144,13 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       modal: {
         ondismiss: () => finalize(reject, new Error('Payment window closed before completion.'))
       }
-    });
+    };
+
+    if (checkoutOptions.theme) {
+      razorpayOptions.theme = checkoutOptions.theme;
+    }
+
+    const razorpay = new window.Razorpay(razorpayOptions);
 
     razorpay.on('payment.failed', (event) => {
       const errorText = toUserFacingError(
@@ -195,32 +237,20 @@ if (form && messageEl && continueBtn && consentCheckbox) {
 
     localStorage.setItem('levelup_buyer_info', JSON.stringify(submission));
 
-    let serverSaved = false;
-    let saveError = '';
-    try {
-      const response = await fetch('/api/submissions/save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submission)
-      });
-
-      const payload = await response.json().catch(() => ({}));
-      if (response.ok && payload.ok) {
-        serverSaved = true;
-      } else {
-        saveError = toUserFacingError(payload.message || 'Could not save buyer info on the server.');
+    const saveState = {
+      resolved: false,
+      serverSaved: false,
+      saveError: ''
+    };
+    saveSubmissionToServer(submission).then((result) => {
+      saveState.resolved = true;
+      saveState.serverSaved = result.serverSaved;
+      saveState.saveError = result.saveError;
+      if (!result.serverSaved) {
+        persistSubmissionLocally(submission);
       }
-    } catch {
-      serverSaved = false;
-      saveError = 'Could not save buyer info on the server.';
-    }
-
-    if (!serverSaved) {
-      const submissionsKey = 'levelup_buyer_submissions';
-      const existing = JSON.parse(localStorage.getItem(submissionsKey) || '[]');
-      const updated = [submission, ...existing].slice(0, 250);
-      localStorage.setItem(submissionsKey, JSON.stringify(updated));
-    }
+      return result;
+    });
 
     try {
       const paymentResponse = await fetch('/api/payments/create', {
@@ -251,10 +281,10 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       const paymentError = toUserFacingError(error?.message || '');
       if (paymentError && paymentError !== 'Unable to create payment session') {
         setMessage(paymentError, 'error');
-      } else if (serverSaved) {
+      } else if (saveState.serverSaved) {
         setMessage('Buyer info saved, but payment session failed. Please try again.', 'error');
-      } else if (saveError) {
-        setMessage(`${saveError} Payment could not start.`, 'error');
+      } else if (saveState.resolved && saveState.saveError) {
+        setMessage(`${saveState.saveError} Payment could not start.`, 'error');
       } else {
         setMessage('Could not start payment right now. Please try again.', 'error');
       }

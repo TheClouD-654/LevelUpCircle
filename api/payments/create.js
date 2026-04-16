@@ -35,6 +35,12 @@ const kvSet = async (key, value) => {
 
 const buildBasicAuthHeader = (keyId, keySecret) => `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`;
 
+const queueOptionalKvWrite = (key, value) => {
+  kvSet(key, value).catch(() => {
+    // Do not block checkout if KV mapping storage is temporarily unavailable.
+  });
+};
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -43,6 +49,7 @@ module.exports = async (req, res) => {
 
   const razorpayKeyId = readEnv('RAZORPAY_KEY_ID');
   const razorpayKeySecret = readEnv('RAZORPAY_KEY_SECRET');
+  const razorpayThemeColor = readEnv('RAZORPAY_THEME_COLOR');
 
   if (!razorpayKeyId || !razorpayKeySecret) {
     return json(res, 503, { ok: false, message: 'Razorpay credentials are not configured' });
@@ -56,9 +63,9 @@ module.exports = async (req, res) => {
   const purpose = String(product.purpose || body.product || 'LevelUp Circle Starter Bundle (ZIP)').trim();
   const inputCurrency = String(product.chargeCurrency || body.currency || 'INR').trim().toUpperCase();
   const amountNumber = Number(product.chargeAmount || body.amount || 1);
-  const usdToInrRate = readNumberEnv('USD_TO_INR_RATE', 83);
+  const usdToInrRate = readNumberEnv('USD_TO_INR_RATE', 93.03);
   const minInrAmount = readNumberEnv(['RAZORPAY_MIN_INR_AMOUNT', 'INSTAMOJO_MIN_INR_AMOUNT'], 9);
-  const safeRate = Number.isFinite(usdToInrRate) && usdToInrRate > 0 ? usdToInrRate : 83;
+  const safeRate = Number.isFinite(usdToInrRate) && usdToInrRate > 0 ? usdToInrRate : 93.03;
   const safeMinInr = Number.isFinite(minInrAmount) && minInrAmount > 0 ? minInrAmount : 9;
   const safeInputAmount = Number.isFinite(amountNumber) && amountNumber > 0 ? amountNumber : 1.99;
 
@@ -140,11 +147,7 @@ module.exports = async (req, res) => {
       chargedCurrency: 'INR',
       createdAt: new Date().toISOString()
     });
-    try {
-      await kvSet(mappingKey, mappingValue);
-    } catch {
-      // Do not block checkout if KV mapping storage is temporarily unavailable.
-    }
+    queueOptionalKvWrite(mappingKey, mappingValue);
 
     return json(res, 200, {
       ok: true,
@@ -168,9 +171,7 @@ module.exports = async (req, res) => {
           productId: product.id,
           sessionId: String(body.sessionId || '').trim()
         },
-        theme: {
-          color: readEnv('RAZORPAY_THEME_COLOR') || '#2f8cff'
-        }
+        ...(razorpayThemeColor ? { theme: { color: razorpayThemeColor } } : {})
       }
     });
   } catch (error) {
