@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { readAbsoluteUrl, readEnv } = require('../_lib/env');
+const { readEnv, readKvRestToken, readKvRestUrl } = require('../_lib/env');
 
 const KV_WEBHOOK_KEY = 'levelup:payment_webhooks';
 const MAX_RECORDS = 500;
@@ -52,8 +52,8 @@ const verifyMac = (payload, salt) => {
 };
 
 const saveToKv = async (entry) => {
-  const kvUrl = readAbsoluteUrl('KV_REST_API_URL');
-  const kvToken = readEnv('KV_REST_API_TOKEN');
+  const kvUrl = readKvRestUrl();
+  const kvToken = readKvRestToken();
   if (!kvUrl || !kvToken) {
     return;
   }

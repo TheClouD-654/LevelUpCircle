@@ -1,4 +1,4 @@
-const { readAbsoluteUrl, readEnv } = require('../_lib/env');
+const { readKvRestToken, readKvRestUrl } = require('../_lib/env');
 const { formatErrorMessage } = require('../_lib/error-format');
 
 const KV_LIST_KEY = 'levelup:buyer_submissions';
@@ -15,8 +15,8 @@ module.exports = async (req, res) => {
     return json(res, 405, { ok: false, message: 'Method not allowed' });
   }
 
-  const kvUrl = readAbsoluteUrl('KV_REST_API_URL');
-  const kvToken = readEnv('KV_REST_API_TOKEN');
+  const kvUrl = readKvRestUrl();
+  const kvToken = readKvRestToken();
 
   if (!kvUrl || !kvToken) {
     return json(res, 503, { ok: false, message: 'KV is not configured', entries: [] });

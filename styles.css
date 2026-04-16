@@ -27,7 +27,7 @@
     body {
       position: relative;
       overflow-x: hidden;
-      font-family: "Inter", sans-serif;
+      font-family: "Inter", Arial, sans-serif;
       color: var(--text);
       background:
         radial-gradient(circle at 15% 5%, rgba(72, 207, 255, 0.16), transparent 28%),
@@ -264,9 +264,10 @@
     }
 
     .nav-logo {
+      width: 40px;
       height: 40px;
-      width: auto;
       display: block;
+      object-fit: contain;
     }
 
     .nav-links {
@@ -505,6 +506,7 @@
     .mentor-image {
       position: relative;
       overflow: hidden;
+      aspect-ratio: 4 / 3;
       min-height: 340px;
       border-radius: var(--radius-lg);
       background:
@@ -839,6 +841,7 @@
       }
 
       .nav-logo {
+        width: 30px;
         height: 30px;
       }
 

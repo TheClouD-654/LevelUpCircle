@@ -17,6 +17,10 @@ let allowNavigation = false;
 let statusSynced = false;
 
 const sanitizeText = (value) => String(value || '').replace(/[<>]/g, '').trim();
+const setDeliveryPanelVisible = (visible) => {
+  deliveryPanelEl.classList.toggle('is-collapsed', !visible);
+  deliveryPanelEl.setAttribute('aria-hidden', visible ? 'false' : 'true');
+};
 const paymentRequestId = String(params.get('payment_request_id') || '').trim();
 const paymentId = String(params.get('payment_id') || '').trim();
 const paymentStatusQuery = String(params.get('payment_status') || '').trim();
@@ -43,6 +47,7 @@ const syncSubmissionStatus = async (status) => {
 };
 
 const setSupportMode = () => {
+  setDeliveryPanelVisible(false);
   const name = sanitizeText(params.get('name'));
   if (name) {
     titleEl.textContent = `Thanks ${name}, we received your message.`;
@@ -53,7 +58,7 @@ const setPaymentLoadingMode = () => {
   kickerEl.textContent = 'Payment Processing';
   titleEl.textContent = 'Verifying your payment...';
   bodyEl.textContent = 'Please wait while we validate your transaction and prepare your file.';
-  deliveryPanelEl.hidden = false;
+  setDeliveryPanelVisible(true);
   deliveryNameEl.textContent = 'Starter Bundle ZIP';
   deliveryMetaEl.textContent = 'Checking payment status with Instamojo...';
   downloadBtnEl.removeAttribute('href');
@@ -66,7 +71,7 @@ const setPaymentErrorMode = (message) => {
   kickerEl.textContent = 'Payment Pending';
   titleEl.textContent = 'We could not verify payment yet.';
   bodyEl.textContent = message || 'Please wait a minute and refresh this page, or contact support with your payment reference.';
-  deliveryPanelEl.hidden = false;
+  setDeliveryPanelVisible(true);
   deliveryMetaEl.textContent = 'If money was deducted, your file will still be delivered once verification completes.';
   downloadBtnEl.removeAttribute('href');
   downloadBtnEl.hidden = true;
@@ -81,7 +86,7 @@ const setPaymentSuccessMode = (payload) => {
   kickerEl.textContent = 'Payment Confirmed';
   titleEl.textContent = 'Your file is ready.';
   bodyEl.textContent = 'Download your ZIP below. A delivery email has been triggered automatically.';
-  deliveryPanelEl.hidden = false;
+  setDeliveryPanelVisible(true);
   deliveryNameEl.textContent = fileName;
   deliveryMetaEl.textContent = 'File unlocked after successful payment verification.';
 

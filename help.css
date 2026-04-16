@@ -17,7 +17,7 @@
 }
 
 body {
-  font-family: "Inter", sans-serif;
+  font-family: "Inter", Arial, sans-serif;
   color: var(--text);
   background:
     radial-gradient(circle at 15% 5%, rgba(72, 207, 255, 0.16), transparent 28%),
@@ -197,6 +197,7 @@ body {
 }
 
 .success-kicker {
+  min-height: 1.3em;
   color: #8ce4bf;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -206,12 +207,17 @@ body {
 }
 
 .success-card h1 {
+  min-height: 1.25em;
   font-size: clamp(1.7rem, 4vw, 2.4rem);
   margin-bottom: 10px;
 }
 
 .success-card p {
   color: var(--muted);
+}
+
+#successBody {
+  min-height: 3.2em;
 }
 
 .success-actions {
@@ -230,10 +236,20 @@ body {
 
 .delivery-panel {
   margin-top: 18px;
+  min-height: 188px;
   border: 1px solid var(--card-border);
   background: rgba(15, 28, 44, 0.62);
   border-radius: 14px;
   padding: 14px;
+}
+
+.delivery-panel.is-collapsed {
+  display: none;
+}
+
+.payment-return .delivery-panel.is-collapsed {
+  display: block;
+  visibility: hidden;
 }
 
 .delivery-panel h2 {
@@ -245,8 +261,13 @@ body {
   margin-top: 10px;
 }
 
+.download-btn {
+  min-height: 44px;
+}
+
 .delivery-email {
   margin-top: 10px;
+  min-height: 1.4em;
   color: #8ce4bf;
   font-size: 0.9rem;
 }

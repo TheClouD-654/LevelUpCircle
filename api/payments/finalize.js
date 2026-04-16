@@ -1,6 +1,6 @@
 const { buildOrigin, signPayload } = require('./_delivery');
 const { DEFAULT_PRODUCT_ID, getProduct, getProductZipUrl } = require('../../data/products');
-const { readAbsoluteUrl, readEnv, readNumberEnv } = require('../_lib/env');
+const { readEnv, readKvRestToken, readKvRestUrl, readNumberEnv } = require('../_lib/env');
 
 const KV_DELIVERY_KEY_PREFIX = 'levelup:delivery:sent:';
 const KV_PAYMENT_REQUEST_KEY_PREFIX = 'levelup:payment_request:';
@@ -24,8 +24,8 @@ const parseJsonBody = (req) => new Promise((resolve) => {
 });
 
 const kvGet = async (key) => {
-  const kvUrl = readAbsoluteUrl('KV_REST_API_URL');
-  const kvToken = readEnv('KV_REST_API_TOKEN');
+  const kvUrl = readKvRestUrl();
+  const kvToken = readKvRestToken();
   if (!kvUrl || !kvToken) return null;
 
   const response = await fetch(`${kvUrl}/get/${encodeURIComponent(key)}`, {
@@ -37,8 +37,8 @@ const kvGet = async (key) => {
 };
 
 const kvSet = async (key, value) => {
-  const kvUrl = readAbsoluteUrl('KV_REST_API_URL');
-  const kvToken = readEnv('KV_REST_API_TOKEN');
+  const kvUrl = readKvRestUrl();
+  const kvToken = readKvRestToken();
   if (!kvUrl || !kvToken) return false;
 
   const response = await fetch(`${kvUrl}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}`, {

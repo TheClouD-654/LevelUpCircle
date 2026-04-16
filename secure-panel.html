@@ -7,12 +7,26 @@
   <link rel="icon" type="image/png" href="images/bglevelupcircle.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet">
   <link rel="stylesheet" href="secure-panel.css" />
 </head>
 <body>
   <main class="panel-shell">
     <a href="/" class="btn btn-secondary">Back to Home</a>
+
+    <section class="admin-warning" aria-labelledby="admin-warning-title">
+      <p class="warning-kicker">Restricted Area</p>
+      <h1 id="admin-warning-title">Admin and staff access only</h1>
+      <p>
+        This secure portal is not for regular visitors. If you are not authorized
+        LevelUp Circle staff, there is nothing useful for you here. Please return
+        to the main site.
+      </p>
+      <p class="warning-note">
+        Five failed code attempts will temporarily block this IP address from
+        using the secure access portal.
+      </p>
+    </section>
 
     <section class="panel-card">
       <h1>Secure Access Portal</h1>
@@ -38,5 +52,4 @@
   <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
-
 

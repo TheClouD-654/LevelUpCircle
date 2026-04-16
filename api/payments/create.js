@@ -1,5 +1,5 @@
 const { getProduct } = require('../../data/products');
-const { readAbsoluteUrl, readEnv, readNumberEnv } = require('../_lib/env');
+const { readAbsoluteUrl, readEnv, readKvRestToken, readKvRestUrl, readNumberEnv } = require('../_lib/env');
 const { formatErrorMessage, pickApiErrorMessage } = require('../_lib/error-format');
 
 const KV_PAYMENT_REQUEST_KEY_PREFIX = 'levelup:payment_request:';
@@ -40,8 +40,8 @@ const buildOrigin = (req) => {
 };
 
 const kvSet = async (key, value) => {
-  const kvUrl = readAbsoluteUrl('KV_REST_API_URL');
-  const kvToken = readEnv('KV_REST_API_TOKEN');
+  const kvUrl = readKvRestUrl();
+  const kvToken = readKvRestToken();
   if (!kvUrl || !kvToken) return false;
 
   const response = await fetch(`${kvUrl}/set/${encodeURIComponent(key)}/${encodeURIComponent(value)}`, {

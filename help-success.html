@@ -7,7 +7,15 @@
   <link rel="icon" type="image/png" href="images/bglevelupcircle.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    (() => {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('payment_request_id') && params.get('payment_id')) {
+        document.documentElement.classList.add('payment-return');
+      }
+    })();
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional" rel="stylesheet">
   <link rel="stylesheet" href="help.css" />
 </head>
 <body>
@@ -21,12 +29,24 @@
             Our support team will review your message and reply within 24 hours.
             If your issue is urgent, email <strong>support@levelupcircle.com</strong>.
           </p>
-          <section id="deliveryPanel" class="delivery-panel" hidden>
+          <section id="deliveryPanel" class="delivery-panel is-collapsed" aria-hidden="true">
             <h2 id="deliveryName">Starter Bundle ZIP</h2>
             <p id="deliveryMeta">Preparing your file details...</p>
-            <a id="downloadBtn" class="btn btn-primary" hidden>Download ZIP</a>
+            <a id="downloadBtn" class="btn btn-primary download-btn" hidden>Download ZIP</a>
             <p id="emailStatus" class="delivery-email"></p>
           </section>
+          <script>
+            (() => {
+              if (!document.documentElement.classList.contains('payment-return')) return;
+              document.getElementById('successKicker').textContent = 'Payment Processing';
+              document.getElementById('successTitle').textContent = 'Verifying your payment...';
+              document.getElementById('successBody').textContent = 'Please wait while we validate your transaction and prepare your file.';
+              const panel = document.getElementById('deliveryPanel');
+              panel.classList.remove('is-collapsed');
+              panel.setAttribute('aria-hidden', 'false');
+              document.getElementById('deliveryMeta').textContent = 'Checking payment status with Instamojo...';
+            })();
+          </script>
           <div class="success-actions">
             <a href="/" class="btn btn-primary">Back to Home</a>
           </div>

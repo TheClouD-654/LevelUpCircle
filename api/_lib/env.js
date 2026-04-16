@@ -38,9 +38,23 @@ const readNumberEnv = (keys, fallback) => {
   return Number.isFinite(value) ? value : fallback;
 };
 
+const readKvRestUrl = () => readAbsoluteUrl(
+  'LEVELUP_KV_REST_API_URL',
+  'NEW_KV_REST_API_URL',
+  'KV_REST_API_URL'
+);
+
+const readKvRestToken = () => readEnv(
+  'LEVELUP_KV_REST_API_TOKEN',
+  'NEW_KV_REST_API_TOKEN',
+  'KV_REST_API_TOKEN'
+);
+
 module.exports = {
   normalizeEnvValue,
   readEnv,
   readAbsoluteUrl,
-  readNumberEnv
+  readNumberEnv,
+  readKvRestUrl,
+  readKvRestToken
 };

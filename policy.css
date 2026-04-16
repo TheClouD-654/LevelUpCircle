@@ -15,7 +15,7 @@
 }
 
 body {
-  font-family: "Inter", sans-serif;
+  font-family: "Inter", Arial, sans-serif;
   color: var(--text);
   background:
     radial-gradient(circle at 12% 8%, rgba(70, 194, 255, 0.2), transparent 30%),

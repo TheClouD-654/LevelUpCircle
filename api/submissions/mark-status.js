@@ -1,4 +1,4 @@
-const { readAbsoluteUrl, readEnv } = require('../_lib/env');
+const { readKvRestToken, readKvRestUrl } = require('../_lib/env');
 
 const KV_LIST_KEY = 'levelup:buyer_submissions';
 const KV_PAYMENT_REQUEST_KEY_PREFIX = 'levelup:payment_request:';
@@ -22,8 +22,8 @@ const parseJsonBody = (req) => new Promise((resolve) => {
 });
 
 const getKvConfig = () => {
-  const kvUrl = readAbsoluteUrl('KV_REST_API_URL');
-  const kvToken = readEnv('KV_REST_API_TOKEN');
+  const kvUrl = readKvRestUrl();
+  const kvToken = readKvRestToken();
   return { kvUrl, kvToken };
 };
 
