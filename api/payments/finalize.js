@@ -1,6 +1,8 @@
+const crypto = require('crypto');
 const { buildOrigin, signPayload } = require('./_delivery');
 const { DEFAULT_PRODUCT_ID, getProduct, getProductZipUrl } = require('../../data/products');
 const { readEnv, readKvRestToken, readKvRestUrl, readNumberEnv } = require('../_lib/env');
+const { pickApiErrorMessage } = require('../_lib/error-format');
 
 const KV_DELIVERY_KEY_PREFIX = 'levelup:delivery:sent:';
 const KV_PAYMENT_REQUEST_KEY_PREFIX = 'levelup:payment_request:';
@@ -111,6 +113,110 @@ const verifyInstamojoPayment = async ({ paymentRequestId, paymentId, apiKey, aut
   return { ok: false, message: lastMessage };
 };
 
+const buildBasicAuthHeader = (keyId, keySecret) => `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`;
+
+const safeEqual = (left, right) => {
+  const a = Buffer.from(String(left || ''), 'utf8');
+  const b = Buffer.from(String(right || ''), 'utf8');
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+};
+
+const verifyRazorpaySignature = ({ orderId, paymentId, signature, keySecret }) => {
+  if (!orderId || !paymentId || !signature || !keySecret) return false;
+  const expected = crypto
+    .createHmac('sha256', keySecret)
+    .update(`${orderId}|${paymentId}`)
+    .digest('hex');
+  return safeEqual(expected, signature);
+};
+
+const fetchRazorpayPayment = async ({ paymentId, authHeader }) => {
+  const response = await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(paymentId)}`, {
+    method: 'GET',
+    headers: { Authorization: authHeader }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: pickApiErrorMessage(payload, 'Unable to fetch Razorpay payment'),
+      upstreamStatus: response.status
+    };
+  }
+  return { ok: true, payment: payload };
+};
+
+const captureRazorpayPayment = async ({ paymentId, amount, currency, authHeader }) => {
+  const response = await fetch(`https://api.razorpay.com/v1/payments/${encodeURIComponent(paymentId)}/capture`, {
+    method: 'POST',
+    headers: {
+      Authorization: authHeader,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ amount, currency })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    return {
+      ok: false,
+      message: pickApiErrorMessage(payload, 'Unable to capture Razorpay payment'),
+      upstreamStatus: response.status
+    };
+  }
+  return { ok: true, payment: payload };
+};
+
+const verifyRazorpayPayment = async ({ orderId, paymentId, signature, keyId, keySecret }) => {
+  if (!verifyRazorpaySignature({ orderId, paymentId, signature, keySecret })) {
+    return { ok: false, message: 'Payment signature mismatch' };
+  }
+
+  const authHeader = buildBasicAuthHeader(keyId, keySecret);
+  const fetched = await fetchRazorpayPayment({ paymentId, authHeader });
+  if (!fetched.ok) {
+    return fetched;
+  }
+
+  let payment = fetched.payment;
+  const resolvedOrderId = String(payment?.order_id || '').trim();
+  if (!resolvedOrderId || resolvedOrderId !== orderId) {
+    return { ok: false, message: 'Payment order mismatch' };
+  }
+
+  let status = normalizeStatus(payment?.status);
+  if (status === 'authorized') {
+    const amount = Number(payment?.amount || 0);
+    const currency = String(payment?.currency || 'INR').trim().toUpperCase() || 'INR';
+    const captured = await captureRazorpayPayment({
+      paymentId,
+      amount,
+      currency,
+      authHeader
+    });
+
+    if (captured.ok) {
+      payment = captured.payment;
+      status = normalizeStatus(payment?.status);
+    } else {
+      const refreshed = await fetchRazorpayPayment({ paymentId, authHeader });
+      if (!refreshed.ok) {
+        return { ok: false, message: captured.message };
+      }
+      payment = refreshed.payment;
+      status = normalizeStatus(payment?.status);
+      if (status !== 'captured') {
+        return { ok: false, message: captured.message };
+      }
+    }
+  }
+
+  if (status !== 'captured') {
+    return { ok: false, message: `Payment not completed. Current status: ${status || 'unknown'}` };
+  }
+
+  return { ok: true, payment };
+};
+
 const buildDeliveryLink = ({ origin, paymentId, paymentRequestId, email, productId }) => {
   const ttlMinutes = readNumberEnv('DOWNLOAD_LINK_TTL_MINUTES', 1440);
   const safeTtlMinutes = Number.isFinite(ttlMinutes) && ttlMinutes > 0 ? ttlMinutes : 1440;
@@ -199,24 +305,25 @@ module.exports = async (req, res) => {
   }
 
   const body = await parseJsonBody(req);
-  const paymentRequestId = String(body.payment_request_id || '').trim();
-  const paymentId = String(body.payment_id || '').trim();
+  const legacyPaymentRequestId = String(body.payment_request_id || '').trim();
+  const legacyPaymentId = String(body.payment_id || '').trim();
   const paymentStatusHint = String(body.payment_status || '').trim();
+  const razorpayOrderId = String(body.razorpay_order_id || '').trim();
+  const razorpayPaymentId = String(body.razorpay_payment_id || '').trim();
+  const razorpaySignature = String(body.razorpay_signature || '').trim();
+
+  const paymentRequestId = razorpayOrderId || legacyPaymentRequestId;
+  const paymentId = razorpayPaymentId || legacyPaymentId;
+  const isRazorpayFlow = Boolean(razorpayOrderId || razorpayPaymentId || razorpaySignature);
 
   if (!paymentRequestId || !paymentId) {
     return json(res, 400, { ok: false, message: 'Missing payment identifiers' });
   }
 
-  const apiKey = readEnv('INSTAMOJO_API_KEY');
-  const authToken = readEnv('INSTAMOJO_AUTH_TOKEN');
-  const baseEndpoint = readEnv('INSTAMOJO_API_BASE') || 'https://www.instamojo.com/api/1.1';
-  if (!apiKey || !authToken) {
-    return json(res, 503, { ok: false, message: 'Instamojo credentials are not configured' });
-  }
-
   const mappingRaw = await kvGet(`${KV_PAYMENT_REQUEST_KEY_PREFIX}${paymentRequestId}`);
   let productId = DEFAULT_PRODUCT_ID;
   let mappedBuyerEmail = '';
+  let mappedBuyerName = '';
   if (mappingRaw) {
     try {
       const mapping = JSON.parse(mappingRaw);
@@ -226,23 +333,54 @@ module.exports = async (req, res) => {
       if (mapping?.buyerEmail) {
         mappedBuyerEmail = String(mapping.buyerEmail).trim();
       }
+      if (mapping?.buyerName) {
+        mappedBuyerName = String(mapping.buyerName).trim();
+      }
     } catch {
       productId = DEFAULT_PRODUCT_ID;
       mappedBuyerEmail = '';
+      mappedBuyerName = '';
     }
   }
 
-  const verification = await verifyInstamojoPayment({
-    paymentRequestId,
-    paymentId,
-    apiKey,
-    authToken,
-    baseEndpoint
-  });
+  let verification;
+  if (isRazorpayFlow) {
+    const razorpayKeyId = readEnv('RAZORPAY_KEY_ID');
+    const razorpayKeySecret = readEnv('RAZORPAY_KEY_SECRET');
+    if (!razorpayKeyId || !razorpayKeySecret) {
+      return json(res, 503, { ok: false, message: 'Razorpay credentials are not configured' });
+    }
+    if (!razorpaySignature) {
+      return json(res, 400, { ok: false, message: 'Missing Razorpay signature' });
+    }
+
+    verification = await verifyRazorpayPayment({
+      orderId: paymentRequestId,
+      paymentId,
+      signature: razorpaySignature,
+      keyId: razorpayKeyId,
+      keySecret: razorpayKeySecret
+    });
+  } else {
+    const apiKey = readEnv('INSTAMOJO_API_KEY');
+    const authToken = readEnv('INSTAMOJO_AUTH_TOKEN');
+    const baseEndpoint = readEnv('INSTAMOJO_API_BASE') || 'https://www.instamojo.com/api/1.1';
+    if (!apiKey || !authToken) {
+      return json(res, 503, { ok: false, message: 'Instamojo credentials are not configured' });
+    }
+
+    verification = await verifyInstamojoPayment({
+      paymentRequestId,
+      paymentId,
+      apiKey,
+      authToken,
+      baseEndpoint
+    });
+  }
 
   // Payout pending is unrelated to buyer payment success. If redirect says Credit,
   // allow immediate delivery even when API verification is delayed/unavailable.
-  const canUseRedirectHint = isSuccessfulStatus(paymentStatusHint);
+  const canUseRedirectHint = !isRazorpayFlow && isSuccessfulStatus(paymentStatusHint);
   if (!verification.ok && !canUseRedirectHint) {
     return json(res, 402, { ok: false, message: verification.message });
   }
@@ -255,8 +393,10 @@ module.exports = async (req, res) => {
         status: paymentStatusHint || 'Credit'
       };
 
-  const buyerEmail = String(payment.buyer_email || payment.buyer || mappedBuyerEmail || '').trim();
-  const buyerName = String(payment.buyer_name || '').trim();
+  const buyerEmail = String(
+    payment.email || payment.buyer_email || payment.buyer || mappedBuyerEmail || ''
+  ).trim();
+  const buyerName = String(payment.notes?.buyer_name || payment.buyer_name || mappedBuyerName || '').trim();
   const product = getProduct(productId);
   const zipUrl = getProductZipUrl(product);
   const fileName = product.zipName || readEnv('PRODUCT_ZIP_NAME') || 'LevelUp-Circle-Starter-Bundle.zip';
@@ -310,8 +450,11 @@ module.exports = async (req, res) => {
     payment: {
       paymentId,
       paymentRequestId,
+      orderId: isRazorpayFlow ? paymentRequestId : undefined,
       status: payment.status,
-      amount: payment.amount,
+      amount: typeof payment.amount === 'number'
+        ? (isRazorpayFlow ? (payment.amount / 100).toFixed(2) : payment.amount)
+        : payment.amount,
       currency: payment.currency
     }
   });

@@ -10,7 +10,9 @@
   <script>
     (() => {
       const params = new URLSearchParams(window.location.search);
-      if (params.get('payment_request_id') && params.get('payment_id')) {
+      const orderId = params.get('razorpay_order_id') || params.get('payment_request_id');
+      const paymentId = params.get('razorpay_payment_id') || params.get('payment_id');
+      if (orderId && paymentId) {
         document.documentElement.classList.add('payment-return');
       }
     })();
@@ -44,7 +46,7 @@
               const panel = document.getElementById('deliveryPanel');
               panel.classList.remove('is-collapsed');
               panel.setAttribute('aria-hidden', 'false');
-              document.getElementById('deliveryMeta').textContent = 'Checking payment status with Instamojo...';
+              document.getElementById('deliveryMeta').textContent = 'Checking payment status...';
             })();
           </script>
           <div class="success-actions">

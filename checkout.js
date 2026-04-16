@@ -63,6 +63,63 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     continueBtn.disabled = !consentCheckbox.checked;
   };
 
+  const openRazorpayCheckout = (checkoutOptions) => new Promise((resolve, reject) => {
+    if (typeof window.Razorpay !== 'function') {
+      reject(new Error('Razorpay checkout is unavailable right now. Please refresh and try again.'));
+      return;
+    }
+
+    const safeOrderId = String(checkoutOptions?.orderId || '').trim();
+    if (!safeOrderId) {
+      reject(new Error('Payment session is missing an order ID.'));
+      return;
+    }
+
+    let finished = false;
+    const finalize = (callback, payload) => {
+      if (finished) return;
+      finished = true;
+      callback(payload);
+    };
+
+    const razorpay = new window.Razorpay({
+      key: checkoutOptions.key,
+      amount: checkoutOptions.amount,
+      currency: checkoutOptions.currency || 'INR',
+      name: checkoutOptions.name || 'LevelUp Circle',
+      description: checkoutOptions.description || selectedProduct.purpose,
+      order_id: safeOrderId,
+      prefill: checkoutOptions.prefill || {},
+      notes: checkoutOptions.notes || {},
+      theme: checkoutOptions.theme || { color: '#2f8cff' },
+      handler: (response) => {
+        const resolvedPaymentId = String(response?.razorpay_payment_id || '').trim();
+        const resolvedSignature = String(response?.razorpay_signature || '').trim();
+        if (!resolvedPaymentId || !resolvedSignature) {
+          finalize(reject, new Error('Payment finished, but verification details were missing.'));
+          return;
+        }
+        finalize(resolve, {
+          orderId: String(response?.razorpay_order_id || safeOrderId).trim(),
+          paymentId: resolvedPaymentId,
+          signature: resolvedSignature
+        });
+      },
+      modal: {
+        ondismiss: () => finalize(reject, new Error('Payment window closed before completion.'))
+      }
+    });
+
+    razorpay.on('payment.failed', (event) => {
+      const errorText = toUserFacingError(
+        event?.error?.description || event?.error?.reason || event?.error?.step || 'Payment failed.'
+      );
+      finalize(reject, new Error(errorText || 'Payment failed.'));
+    });
+
+    razorpay.open();
+  });
+
   const hasCheckoutProgress = () => {
     const name = String(form.querySelector('#buyer-name')?.value || '').trim();
     const email = String(form.querySelector('#buyer-email')?.value || '').trim();
@@ -173,15 +230,22 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       });
 
       const paymentPayload = await paymentResponse.json().catch(() => ({}));
-      if (!paymentResponse.ok || !paymentPayload.ok || !paymentPayload.checkoutUrl) {
+      if (!paymentResponse.ok || !paymentPayload.ok || !paymentPayload.checkoutOptions?.orderId) {
         throw new Error(
           toUserFacingError(paymentPayload.message || 'Unable to create payment session')
         );
       }
 
-      setMessage('Redirecting to secure payment...', 'success');
+      setMessage('Opening secure Razorpay checkout...', 'success');
+      const paymentResult = await openRazorpayCheckout(paymentPayload.checkoutOptions);
+      const successUrl = new URL('/help-success', window.location.origin);
+      successUrl.searchParams.set('razorpay_order_id', paymentResult.orderId);
+      successUrl.searchParams.set('razorpay_payment_id', paymentResult.paymentId);
+      successUrl.searchParams.set('razorpay_signature', paymentResult.signature);
+      successUrl.searchParams.set('payment_request_id', paymentResult.orderId);
+      successUrl.searchParams.set('payment_id', paymentResult.paymentId);
       redirectingToPayment = true;
-      window.location.href = paymentPayload.checkoutUrl;
+      window.location.href = successUrl.toString();
     } catch (error) {
       syncContinueState();
       const paymentError = toUserFacingError(error?.message || '');

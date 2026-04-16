@@ -1,5 +1,5 @@
 const { getProduct } = require('../../data/products');
-const { readAbsoluteUrl, readEnv, readKvRestToken, readKvRestUrl, readNumberEnv } = require('../_lib/env');
+const { readEnv, readKvRestToken, readKvRestUrl, readNumberEnv } = require('../_lib/env');
 const { formatErrorMessage, pickApiErrorMessage } = require('../_lib/error-format');
 
 const KV_PAYMENT_REQUEST_KEY_PREFIX = 'levelup:payment_request:';
@@ -22,23 +22,6 @@ const parseJsonBody = (req) => new Promise((resolve) => {
   });
 });
 
-const buildOrigin = (req) => {
-  const explicit = readAbsoluteUrl('PUBLIC_SITE_URL', 'SITE_URL');
-  if (explicit) {
-    return explicit;
-  }
-
-  const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim() || 'https';
-  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim();
-  if (!host) return '';
-
-  try {
-    return new URL(`${proto}://${host}`).toString().replace(/\/$/, '');
-  } catch {
-    return '';
-  }
-};
-
 const kvSet = async (key, value) => {
   const kvUrl = readKvRestUrl();
   const kvToken = readKvRestToken();
@@ -50,18 +33,19 @@ const kvSet = async (key, value) => {
   return response.ok;
 };
 
+const buildBasicAuthHeader = (keyId, keySecret) => `Basic ${Buffer.from(`${keyId}:${keySecret}`).toString('base64')}`;
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return json(res, 405, { ok: false, message: 'Method not allowed' });
   }
 
-  const apiKey = readEnv('INSTAMOJO_API_KEY');
-  const authToken = readEnv('INSTAMOJO_AUTH_TOKEN');
-  const baseEndpoint = readEnv('INSTAMOJO_API_BASE') || 'https://www.instamojo.com/api/1.1';
+  const razorpayKeyId = readEnv('RAZORPAY_KEY_ID');
+  const razorpayKeySecret = readEnv('RAZORPAY_KEY_SECRET');
 
-  if (!apiKey || !authToken) {
-    return json(res, 503, { ok: false, message: 'Instamojo credentials are not configured' });
+  if (!razorpayKeyId || !razorpayKeySecret) {
+    return json(res, 503, { ok: false, message: 'Razorpay credentials are not configured' });
   }
 
   const body = await parseJsonBody(req);
@@ -73,19 +57,18 @@ module.exports = async (req, res) => {
   const inputCurrency = String(product.chargeCurrency || body.currency || 'INR').trim().toUpperCase();
   const amountNumber = Number(product.chargeAmount || body.amount || 1);
   const usdToInrRate = readNumberEnv('USD_TO_INR_RATE', 83);
-  const minInrAmount = readNumberEnv('INSTAMOJO_MIN_INR_AMOUNT', 9);
+  const minInrAmount = readNumberEnv(['RAZORPAY_MIN_INR_AMOUNT', 'INSTAMOJO_MIN_INR_AMOUNT'], 9);
   const safeRate = Number.isFinite(usdToInrRate) && usdToInrRate > 0 ? usdToInrRate : 83;
   const safeMinInr = Number.isFinite(minInrAmount) && minInrAmount > 0 ? minInrAmount : 9;
   const safeInputAmount = Number.isFinite(amountNumber) && amountNumber > 0 ? amountNumber : 1.99;
 
   let chargeInrAmount = safeInputAmount;
-  let chargedCurrency = inputCurrency;
   if (inputCurrency === 'USD') {
-    chargeInrAmount = Math.ceil(safeInputAmount * safeRate);
-    chargedCurrency = 'INR';
+    chargeInrAmount = safeInputAmount * safeRate;
   }
   chargeInrAmount = Math.max(safeMinInr, chargeInrAmount);
-  const amount = chargeInrAmount.toFixed(2);
+  const amountPaise = Math.round(chargeInrAmount * 100);
+  const chargedAmount = (amountPaise / 100).toFixed(2);
 
   if (!buyerName || !email || !phone) {
     return json(res, 400, { ok: false, message: 'Name, email, and phone are required' });
@@ -95,46 +78,32 @@ module.exports = async (req, res) => {
     return json(res, 400, { ok: false, message: 'Invalid phone number' });
   }
 
-  const origin = buildOrigin(req);
-  if (!origin) {
-    return json(res, 500, { ok: false, message: 'Unable to determine site origin for redirects' });
-  }
-
-  const redirectUrl = `${origin}/help-success`;
-  const webhookUrl = readAbsoluteUrl('INSTAMOJO_WEBHOOK_URL');
-  let endpoint = '';
-  try {
-    endpoint = `${new URL(baseEndpoint).toString().replace(/\/$/, '')}/payment-requests/`;
-  } catch {
-    return json(res, 500, { ok: false, message: 'Instamojo API base URL is invalid' });
-  }
-
-  const payload = new URLSearchParams({
-    purpose,
-    amount,
-    buyer_name: buyerName,
-    email,
-    redirect_url: redirectUrl,
-    allow_repeated_payments: 'false',
-    send_email: 'false',
-    send_sms: 'false'
-  });
-
-  if (webhookUrl) {
-    payload.set('webhook', webhookUrl);
-  }
-
-  payload.set('phone', phone);
+  const endpoint = 'https://api.razorpay.com/v1/orders';
+  const receiptBase = String(body.sessionId || `${Date.now()}`)
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .slice(0, 28) || `${Date.now()}`;
+  const payload = {
+    amount: amountPaise,
+    currency: 'INR',
+    receipt: `luc_${receiptBase}`.slice(0, 40),
+    notes: {
+      product_id: product.id,
+      session_id: String(body.sessionId || '').trim(),
+      buyer_name: buyerName,
+      buyer_email: email,
+      buyer_phone: phone,
+      purpose
+    }
+  };
 
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'X-Api-Key': apiKey,
-        'X-Auth-Token': authToken,
-        'Content-Type': 'application/x-www-form-urlencoded'
+        Authorization: buildBasicAuthHeader(razorpayKeyId, razorpayKeySecret),
+        'Content-Type': 'application/json'
       },
-      body: payload.toString()
+      body: JSON.stringify(payload)
     });
 
     const responseText = await response.text();
@@ -144,12 +113,12 @@ module.exports = async (req, res) => {
     } catch {
       result = {};
     }
-    const checkoutUrl = result?.payment_request?.longurl || '';
+    const orderId = String(result?.id || '').trim();
 
-    if (!response.ok || !result?.success || !checkoutUrl) {
+    if (!response.ok || !orderId) {
       const message = pickApiErrorMessage(
         result && Object.keys(result).length ? result : responseText,
-        'Instamojo payment request creation failed'
+        'Razorpay order creation failed'
       ).replace(/\s+/g, ' ').trim();
       return json(res, 502, {
         ok: false,
@@ -158,34 +127,56 @@ module.exports = async (req, res) => {
       });
     }
 
-    const paymentRequestId = String(result?.payment_request?.id || '').trim();
-    if (paymentRequestId) {
-      const mappingKey = `${KV_PAYMENT_REQUEST_KEY_PREFIX}${paymentRequestId}`;
-      const mappingValue = JSON.stringify({
-        productId: product.id,
-        sessionId: String(body.sessionId || '').trim(),
-        purpose,
-        buyerEmail: email,
-        createdAt: new Date().toISOString()
-      });
-      try {
-        await kvSet(mappingKey, mappingValue);
-      } catch {
-        // Do not block checkout if KV mapping storage is temporarily unavailable.
-      }
+    const mappingKey = `${KV_PAYMENT_REQUEST_KEY_PREFIX}${orderId}`;
+    const mappingValue = JSON.stringify({
+      productId: product.id,
+      sessionId: String(body.sessionId || '').trim(),
+      purpose,
+      buyerEmail: email,
+      buyerName,
+      buyerPhone: phone,
+      amountPaise,
+      chargedAmount,
+      chargedCurrency: 'INR',
+      createdAt: new Date().toISOString()
+    });
+    try {
+      await kvSet(mappingKey, mappingValue);
+    } catch {
+      // Do not block checkout if KV mapping storage is temporarily unavailable.
     }
 
     return json(res, 200, {
       ok: true,
-      checkoutUrl,
-      paymentRequestId,
-      chargedCurrency,
-      chargedAmount: amount
+      paymentProvider: 'razorpay',
+      paymentRequestId: orderId,
+      chargedCurrency: 'INR',
+      chargedAmount,
+      checkoutOptions: {
+        key: razorpayKeyId,
+        amount: amountPaise,
+        currency: 'INR',
+        name: readEnv('RAZORPAY_BRAND_NAME') || 'LevelUp Circle',
+        description: purpose,
+        orderId,
+        prefill: {
+          name: buyerName,
+          email,
+          contact: phone
+        },
+        notes: {
+          productId: product.id,
+          sessionId: String(body.sessionId || '').trim()
+        },
+        theme: {
+          color: readEnv('RAZORPAY_THEME_COLOR') || '#2f8cff'
+        }
+      }
     });
   } catch (error) {
     return json(res, 500, {
       ok: false,
-      message: formatErrorMessage(error, 'Server error while creating payment request')
+      message: formatErrorMessage(error, 'Server error while creating Razorpay order')
     });
   }
 };

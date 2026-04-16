@@ -8,9 +8,16 @@ const downloadBtnEl = document.getElementById('downloadBtn');
 const emailStatusEl = document.getElementById('emailStatus');
 
 const params = new URLSearchParams(window.location.search);
+const legacyPaymentRequestId = String(params.get('payment_request_id') || '').trim();
+const legacyPaymentId = String(params.get('payment_id') || '').trim();
+const razorpayOrderId = String(params.get('razorpay_order_id') || '').trim();
+const razorpayPaymentId = String(params.get('razorpay_payment_id') || '').trim();
+const razorpaySignature = String(params.get('razorpay_signature') || '').trim();
+const paymentRequestId = razorpayOrderId || legacyPaymentRequestId;
+const paymentId = razorpayPaymentId || legacyPaymentId;
 const isPaymentContext = Boolean(
-  String(params.get('payment_request_id') || '').trim() &&
-  String(params.get('payment_id') || '').trim()
+  paymentRequestId &&
+  paymentId
 );
 let deliveryReady = false;
 let allowNavigation = false;
@@ -21,8 +28,6 @@ const setDeliveryPanelVisible = (visible) => {
   deliveryPanelEl.classList.toggle('is-collapsed', !visible);
   deliveryPanelEl.setAttribute('aria-hidden', visible ? 'false' : 'true');
 };
-const paymentRequestId = String(params.get('payment_request_id') || '').trim();
-const paymentId = String(params.get('payment_id') || '').trim();
 const paymentStatusQuery = String(params.get('payment_status') || '').trim();
 
 const syncSubmissionStatus = async (status) => {
@@ -60,7 +65,7 @@ const setPaymentLoadingMode = () => {
   bodyEl.textContent = 'Please wait while we validate your transaction and prepare your file.';
   setDeliveryPanelVisible(true);
   deliveryNameEl.textContent = 'Starter Bundle ZIP';
-  deliveryMetaEl.textContent = 'Checking payment status with Instamojo...';
+  deliveryMetaEl.textContent = 'Checking payment status...';
   downloadBtnEl.removeAttribute('href');
   downloadBtnEl.hidden = true;
   emailStatusEl.textContent = '';
@@ -85,7 +90,7 @@ const setPaymentSuccessMode = (payload) => {
 
   kickerEl.textContent = 'Payment Confirmed';
   titleEl.textContent = 'Your file is ready.';
-  bodyEl.textContent = 'Download your ZIP below. A delivery email has been triggered automatically.';
+  bodyEl.textContent = 'Download your ZIP below. If email delivery is enabled, it will reach you automatically too.';
   setDeliveryPanelVisible(true);
   deliveryNameEl.textContent = fileName;
   deliveryMetaEl.textContent = 'File unlocked after successful payment verification.';
@@ -147,8 +152,11 @@ const runPaymentFlow = async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        payment_request_id: paymentRequestId,
-        payment_id: paymentId,
+        payment_request_id: legacyPaymentRequestId || paymentRequestId,
+        payment_id: legacyPaymentId || paymentId,
+        razorpay_order_id: razorpayOrderId,
+        razorpay_payment_id: razorpayPaymentId,
+        razorpay_signature: razorpaySignature,
         payment_status: String(params.get('payment_status') || '').trim()
       })
     });
