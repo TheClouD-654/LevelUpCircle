@@ -10,7 +10,7 @@ const PRODUCTS = {
     newPriceDisplay: '$1.99',
     displayAmount: 1.99,
     displayCurrency: 'USD',
-    chargeAmount: 0.011,
+    chargeAmount: 0.11,
     chargeCurrency: 'USD',
     zipName: 'LevelUp-Circle-Starter-Bundle.zip',
     zipUrlEnvKey: 'PRODUCT_STARTER_ZIP_URL'
