@@ -62,6 +62,10 @@
         />
         
         <p id="form-message" class="form-message" aria-live="polite"></p>
+        <div id="payment-loader" class="payment-loader" hidden aria-live="polite" role="status">
+          <span class="payment-loader__ring" aria-hidden="true"></span>
+          <span id="payment-loader-text">Preparing secure payment...</span>
+        </div>
         <label class="consent-check" for="consent-checkbox">
           <input id="consent-checkbox" name="consent" type="checkbox" />
           <span>
@@ -70,7 +74,10 @@
             <a href="/refund-policy">Refund and Cancellation Policy</a>.
           </span>
         </label>
-        <button id="continue-btn" type="submit" disabled>Continue to Secure Payment</button>
+        <button id="continue-btn" type="submit" disabled aria-busy="false">
+          <span class="button-spinner" aria-hidden="true"></span>
+          <span class="button-label">Continue to Secure Payment</span>
+        </button>
       </form>
     </section>
   </main>

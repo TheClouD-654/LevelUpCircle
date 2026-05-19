@@ -2,6 +2,9 @@ const form = document.querySelector('#checkout-form');
 const messageEl = document.querySelector('#form-message');
 const continueBtn = document.querySelector('#continue-btn');
 const consentCheckbox = document.querySelector('#consent-checkbox');
+const paymentLoaderEl = document.querySelector('#payment-loader');
+const paymentLoaderTextEl = document.querySelector('#payment-loader-text');
+const continueBtnLabelEl = continueBtn?.querySelector('.button-label');
 const checkoutPriceEl = document.querySelector('#checkout-new-price');
 const checkoutOldPriceEl = document.querySelector('#checkout-old-price');
 const productTitleEl = document.querySelector('#checkout-product-title');
@@ -96,6 +99,23 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     if (type) messageEl.classList.add(type);
   };
 
+  const setPaymentLoading = (isLoading, text = 'Preparing secure payment...') => {
+    if (paymentLoaderEl) {
+      paymentLoaderEl.hidden = !isLoading;
+    }
+
+    if (paymentLoaderTextEl) {
+      paymentLoaderTextEl.textContent = text;
+    }
+
+    continueBtn.classList.toggle('is-loading', isLoading);
+    continueBtn.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+
+    if (continueBtnLabelEl) {
+      continueBtnLabelEl.textContent = isLoading ? text : 'Continue to Secure Payment';
+    }
+  };
+
   const syncContinueState = () => {
     continueBtn.disabled = !consentCheckbox.checked;
   };
@@ -182,6 +202,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       setMessage('Please agree to terms before continuing.', 'error');
     } else {
       setMessage('', '');
+      setPaymentLoading(false);
     }
   });
 
@@ -220,6 +241,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
     }
 
     continueBtn.disabled = true;
+    setPaymentLoading(true, 'Preparing secure payment...');
     setMessage('Preparing secure checkout...', 'success');
 
     const submission = {
@@ -266,8 +288,10 @@ if (form && messageEl && continueBtn && consentCheckbox) {
         );
       }
 
+      setPaymentLoading(true, 'Opening Razorpay checkout...');
       setMessage('Opening secure Razorpay checkout...', 'success');
       const paymentResult = await openRazorpayCheckout(paymentPayload.checkoutOptions);
+      setPaymentLoading(true, 'Verifying payment...');
       const successUrl = new URL('/help-success', window.location.origin);
       successUrl.searchParams.set('razorpay_order_id', paymentResult.orderId);
       successUrl.searchParams.set('razorpay_payment_id', paymentResult.paymentId);
@@ -277,6 +301,7 @@ if (form && messageEl && continueBtn && consentCheckbox) {
       redirectingToPayment = true;
       window.location.href = successUrl.toString();
     } catch (error) {
+      setPaymentLoading(false);
       syncContinueState();
       const paymentError = toUserFacingError(error?.message || '');
       if (paymentError && paymentError !== 'Unable to create payment session') {
